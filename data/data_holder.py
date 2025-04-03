@@ -142,7 +142,7 @@ class DataCreator():
         with open(qa_path, "r") as f:
             qas = json.load(f)
         # qas is a dictionary of the form 
-        # {"class_name": [{"question": question1, "options": None or option_list, "answer": answer1, "status": status}, ...]}
+        # {"class_name": [{"question": question1, "options": None or option_list, "answer": answer1, "status": status, "source": source}, ...]}
         # we want to select only ones where the status is approved
         self.qas = {}
         for class_name, qa_list in qas.items():
