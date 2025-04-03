@@ -3,7 +3,7 @@ from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import pandas as pd
 from tqdm import tqdm
-from experiments.grounding_utilities.identification import handle_openai
+from experiments.grounding_utilities.identification import handle_openai, HiddenStateTracking, VocabProjectionTracking, save, update_row
 
 
 def get_starting_df(dataset, vlm, results_df_path, parameters):
@@ -41,6 +41,16 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
         if checkpoint_every > 1 or checkpoint_every < 0:
             log_error(parameters["logger"], f"Invalid checkpoint_every value: {checkpoint_every}. Must be between 0 and 1.")
 
+        hidden_state_tracker = None
+        projection_tracker = None
+        if variant == "hidden_state":
+            hidden_state_tracker = HiddenStateTracking(dataset, vlm, "full_information", parameters)
+            hidden_state_tracker.load_checkpoint()
+        elif variant == "vocab_projection":
+            projection_tracker = VocabProjectionTracking(dataset, vlm, "full_information", parameters)
+            projection_tracker.load_checkpoint()
+            
+
         checkpoint_every = int(checkpoint_every * len(results_df))
         for idx, row in tqdm(results_df, total=len(results_df)):
             if not row["full_information_complete"]:
@@ -48,9 +58,8 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
                 image = data["image"]
                 full_information_question = data["full_information_question"]
                 response = vlm(image, full_information_question)
-                results_df.loc[idx, "full_information_response"] = response
-                results_df.loc[idx, "full_information_complete"] = True
+                update_row(results_df, idx, "full_information", response, hidden_state_tracker=hidden_state_tracker, projection_tracker=projection_tracker)
                 if idx % checkpoint_every == 0:  # This is okay because its sequential so it won't skip saving once it restarts
-                    results_df.to_csv(results_df_path, index=False)
-        results_df.to_csv(results_df_path, index=False)
+                    save(results_df, results_df_path, hidden_state_tracker, projection_tracker)
+        save(results_df, results_df_path, hidden_state_tracker, projection_tracker)
     return results_df_path

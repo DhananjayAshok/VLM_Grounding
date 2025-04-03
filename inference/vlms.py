@@ -1,4 +1,6 @@
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, InstructBlipProcessor, InstructBlipForConditionalGeneration
+from utils.parameter_handling import load_parameters
+from utils.log_handling import log_error
 import torch
 from PIL import Image
 import requests
@@ -14,19 +16,96 @@ openai_tmp_file_dir = "openai_tmp_files"
 
 # load all models and have a single function that you can call (with batch input) and get the output text
 
-def get_vlm(name):
+def get_vlm(name, hidden_state_tracking_mode=False, vocab_projection_mode=False, attention_tracking_mode=False, parameters=None):
+    if parameters is None:
+        parameters = load_parameters()
     if "llava" in name:
-        return LlaVaInference(variant=name)
+        return LlaVaInference(variant=name, vocab_projection_mode=vocab_projection_mode, hidden_state_tracking_mode=hidden_state_tracking_mode, attention_tracking_mode=attention_tracking_mode)
     elif "instructblip" in name:
         return BLIPInference(variant=name)
     elif "gpt" in name:
+        if hidden_state_tracking_mode or vocab_projection_mode or attention_tracking_mode:
+            log_error(parameters['logger'], "OpenAI does not support hidden state tracking, vocab projection or attention tracking.")
         return OpenAIInference(variant=name)
     else:
         raise ValueError(f"Model {name} not recognized.")
 
+def compute_vocab_proj(hidden_state, unembedding_layer, device):
+    scores = unembedding_layer(hidden_state.to(device))
+    return scores
 
-class LlaVaInference:
+def compute_softmax(logits):
+    probs = torch.nn.functional.softmax(logits, dim=-1).detach().cpu().numpy()
+    return probs
+
+
+def kl_divergence(logits_p, logits_q):
+    dist1 = torch.distributions.Categorical(logits=logits_p)
+    dist2 = torch.distributions.Categorical(logits=logits_q)
+    kl_div = torch.distributions.kl.kl_divergence(dist1, dist2)
+    return kl_div.item()
+
+
+def forward_kl(vocab_array):
+    # vocab_array shape is n_layers, vocab_size
+    kl_divs = [] # this is a n_layers - 1 length array
+    for i in range(1, vocab_array.shape[0]):
+        kl_divs.append(kl_divergence(vocab_array[i-1], vocab_array[i]))
+    return np.array(kl_divs)
+
+
+class HuggingFaceInference:    
+    def generate(self, inputs, max_new_tokens=10):
+        input_length = inputs["input_ids"].shape[1]
+        output = self.model.generate(**inputs, max_new_tokens=max_new_tokens, pad_token_id=self.model.config.eos_token_id, stop_strings=["[STOP]"], tokenizer=self.processor.tokenizer, output_hidden_states=True, return_dict_in_generate=True, output_scores=True)
+        output_tokens = output["sequences"][0, input_length:]
+        output_text = self.processor.decode(output_tokens, skip_special_tokens=True)
+        transition_scores = self.model.compute_transition_scores(output.sequences, output.scores, normalize_logits=True)
+        response = {
+            "text": output_text,
+            "perplexity": transition_scores.mean().item(),
+        }
+        if self.vocab_projection_mode:
+            # output['hidden_states'] is a tuple of tuples of torch tensors with overall shape: n_tokens_generated x n_layers x (1, either input_length or 1) x hidden_dim)
+            # it is input_length only in the first i.e. token_generated = 0
+            # Return should be in the form: n_tokens_generated x n_layers x |V|
+            n_tokens_generated = len(output["hidden_states"])
+            n_layers = len(output["hidden_states"][0])
+            vocab_size = self.model.config.vocab_size
+            unembedding_layer = self.model.language_model.lm_head # TODO: Check that this is the same for InstructBLIP
+            hidden_dim = unembedding_layer.in_features
+            # infer the device that eventually goes into the unembedding_layer by getting the device of the last tensor in the hidden states by layer
+            device = output["hidden_states"][0][-1].device
+            ret_array = np.zeros((n_layers, vocab_size)) # to start, only consider the first token predicted
+            for i in range(1):
+                for j in range(n_layers):
+                    # ret_array[i, j] 
+                    ret_array[j] = self.compute_vocab_proj(output["hidden_states"][i][j][0, -1], unembedding_layer, device)
+            # compute the KL Divergence and the probabilities here itself. 
+            div_array = forward_kl(ret_array)
+            # compute the softmax
+            probs = compute_softmax(ret_array)
+            first_token_id = output["sequences"][0, input_length].item()
+            # get the probs for the first token
+            first_token_probs = probs[0, first_token_id]
+            response["kl_divergence"] = div_array
+            response["projection_prob"] = first_token_probs
+            
+        if self.hidden_state_tracking_mode:
+            output_hidden_states = {}
+            for i, layer in enumerate(self.layers_to_track):
+                output_hidden_states[f"{layer}_last_input"] = output["hidden_states"][0][layer][0, -1].detach().cpu().numpy()
+                output_hidden_states[f"{layer}_last_output"] = output["hidden_states"][-1][layer][0, -1].detach().cpu().numpy()
+            response["hidden_states"] = output_hidden_states
+        elif self.attention_tracking_mode:
+            pass
+        return response
+
+
+
+class LlaVaInference(HuggingFaceInference):
     def __init__(self, variant="llava-v1.6-mistral-7b-hf", vocab_projection_mode=False, hidden_state_tracking_mode=False, attention_tracking_mode=False):
+        super().__init__()
         self.variant = variant
         self.processor = LlavaNextProcessor.from_pretrained(f"llava-hf/{variant}")
         self.vocab_projection_mode = vocab_projection_mode
@@ -49,11 +128,6 @@ class LlaVaInference:
             self.layers_to_track = layers_to_track
         
 
-    def compute_vocab_proj(self, hidden_state, unembedding_layer, device):
-        scores = torch.nn.functional.softmax(unembedding_layer(hidden_state.to(device)), dim=-1).detach().cpu().numpy()
-        return scores
-
-
     def __call__(self, image, text):
         conversation = [
             {
@@ -66,49 +140,34 @@ class LlaVaInference:
         ]
         prompt = self.processor.apply_chat_template(conversation, add_generation_prompt=True)
         inputs = self.processor(images=[image], text=prompt, return_tensors="pt").to(self.model.device)
-        input_length = inputs["input_ids"].shape[1]
-        output = self.model.generate(**inputs, max_new_tokens=10, pad_token_id=self.model.config.eos_token_id, stop_strings=["[STOP]"], tokenizer=self.processor.tokenizer, output_hidden_states=True, return_dict_in_generate=True)
-        output_tokens = output["sequences"][0, input_length:]
-        output_text = self.processor.decode(output_tokens, skip_special_tokens=True)
-        if self.vocab_projection_mode:
-            # output['hidden_states'] is a tuple of tuples of torch tensors with overall shape: n_tokens_generated x n_layers x (1, either input_length or 1) x hidden_dim)
-            # it is input_length only in the first i.e. token_generated = 0
-            # Return should be in the form: n_tokens_generated x n_layers x |V|
-            n_tokens_generated = len(output["hidden_states"])
-            n_layers = len(output["hidden_states"][0])
-            vocab_size = self.model.config.vocab_size
-            unembedding_layer = self.model.language_model.lm_head
-            hidden_dim = unembedding_layer.in_features
-            # infer the device that eventually goes into the unembedding_layer by getting the device of the last tensor in the hidden states by layer
-            device = output["hidden_states"][0][-1].device
-            ret_array = np.zeros((n_layers, vocab_size)) # to start, only consider the first token predicted
-            for i in range(1):
-                for j in range(n_layers):
-                    # ret_array[i, j] 
-                    ret_array[j] = self.compute_vocab_proj(output["hidden_states"][i][j][0, -1], unembedding_layer, device)
-            return output_text, ret_array
-        elif self.hidden_state_tracking_mode:
-            output_hidden_states = {}
-            for i, layer in enumerate(self.layers_to_track):
-                output_hidden_states[f"{layer}_last_input"] = output["hidden_states"][0][-1, layer].detach().cpu().numpy()  # TODO: This is certainly wrong. It tracks something else. Fix this line. 
-                output_hidden_states[f"{layer}_last_output"] = output["hidden_states"][-1][0, layer].detach().cpu().numpy()  # TODO: This is certainly wrong. It tracks something else. Fix this line. 
-
-            return output_text, output_hidden_states
-        elif self.attention_tracking_mode:
-            pass
-        else:
-            return output_text
+        return self.generate(inputs, max_new_tokens=100)
     
     def __str__(self):
         return f"{self.variant}"
     
 
-class BLIPInference:
-    def __init__(self, variant="instructblip-vicuna-7b"):
+class BLIPInference(HuggingFaceInference):
+    def __init__(self, variant="instructblip-vicuna-7b", vocab_projection_mode=False, hidden_state_tracking_mode=False, attention_tracking_mode=False):
+        super().__init__()
         self.variant = variant
         self.processor = InstructBlipProcessor.from_pretrained(f"Salesforce/{variant}")
         self.model = InstructBlipForConditionalGeneration.from_pretrained(f"Salesforce/{variant}", device_map="auto")
         self.model.eval()
+        self.vocab_projection_mode = vocab_projection_mode
+        self.hidden_state_tracking_mode = hidden_state_tracking_mode
+        self.attention_tracking_mode = attention_tracking_mode
+        # set pad_token_id to eos_token_id
+        if self.model.config.pad_token_id is None:
+            if self.model.config.eos_token_id is not None:
+                self.model.config.pad_token_id = self.model.config.eos_token_id
+            else:
+                self.model.config.eos_token_id = self.processor.tokenizer.eos_token_id
+                self.model.config.pad_token_id = self.model.config.eos_token_id
+        if self.hidden_state_tracking_mode:
+            n_layers = self.model.config.num_hidden_layers
+            layers_to_track = list(range(1, n_layers-1), 4)
+            self.layers_to_track = layers_to_track
+
 
     def get_parallelized_model(self, variant):
         n_devices = torch.cuda.device_count()
@@ -145,9 +204,7 @@ class BLIPInference:
 
     def __call__(self, image, text):
         inputs = self.processor(images=image, text=text, return_tensors="pt").to(self.model.device)
-        outputs = self.model.generate(**inputs, max_new_tokens=100, stop_strings=["[STOP]"], tokenizer=self.processor.tokenizer)
-        outputs = outputs[:, inputs["input_ids"].shape[1]:]
-        return self.processor.decode(outputs[0], skip_special_tokens=True)
+        return self.generate(inputs, max_new_tokens=100)
     
     def __str__(self):
         return f"{self.variant}"

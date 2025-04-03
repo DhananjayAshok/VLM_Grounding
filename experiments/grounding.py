@@ -23,11 +23,18 @@ click.command()
 @click.option("--model", help="The VLM whose grounding ability is being tested", default="llava-v1.6-vicuna-13b-hf")
 @click.option("--stage", help="The stage of the grounding process", default="full_information", options=["identification", "full_information", "image_reference", "trivial", "evaluation", "all",])
 @click.option("--checkpoint_every", type=float, default=0.1, help="Checkpoint every x percent of the dataset")
-@click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection"], help="The variant of the forward pass, controlling what information is stord.")
+@click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection"]), help="The variant of the forward pass, controlling what information is stord.")
 @click.pass_obj
 def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_every, variant):
     dataset = get_dataset(dataset_name)
-    vlm = get_vlm(model)
+    if variant == "default":
+        vlm = get_vlm(model)
+    elif variant == "hidden_state":
+        vlm = get_vlm(model, hidden_state_tracking_mode=True)
+    elif variant == "vocab_projection":
+        vlm = get_vlm(model, vocab_projection_mode=True)
+    else:
+        log_error(parameters["logger"], f"Invalid variant: {variant}. Must be one of ['default', 'hidden_state', 'vocab_projection']")
     if "gpt" in str(vlm) and stage == "all":
         log_error(parameters["logger"], "OpenAI models do not support the 'all' stage. Please specify a specific stage.")
     if stage in ["identification", "all"]:

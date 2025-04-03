@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from PIL import Image
 import random
-
+from experiments.grounding_utilities.identification import HiddenStateTracking, VocabProjectionTracking, update_row
 
 def create_black_image(width, height):
     return Image.new("RGB", (width, height), "black")
@@ -80,6 +80,16 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
     results_df.loc[f"{variant}_complete"] = True
     results_df.to_csv(results_df_path, index=False)
 
+def save(results_df, results_df_path, full_hidden_state_trackers, full_projection_trackers, image_reference_hidden_state_trackers, image_reference_projection_trackers):
+    results_df.to_csv(results_df_path, index=False)
+    for trivial in ["black", "white", "noise"]:
+            if full_hidden_state_trackers[trivial] is not None:
+                full_hidden_state_trackers[trivial].save_checkpoint()
+                image_reference_hidden_state_trackers[trivial].save_checkpoint()
+            if full_projection_trackers[trivial] is not None:
+                full_projection_trackers[trivial].save_checkpoint()
+                image_reference_projection_trackers[trivial].save_checkpoint()
+
 
 def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_every=0.1): # must consider OpenAI as well
     if parameters is None:
@@ -88,7 +98,7 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
     results_df_path = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
 
     if "gpt" in str(vlm): # handle openAI differently
-        pass
+        handle_openai(dataset, vlm, results_df_path, parameters)
     else:
         results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
         if results_df["trivial_complete"].all():
@@ -96,6 +106,34 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
             return results_df
         if checkpoint_every > 1 or checkpoint_every < 0:
             log_error(parameters["logger"], f"Invalid checkpoint_every value: {checkpoint_every}. Must be between 0 and 1.")
+
+
+        full_hidden_state_trackers = {}
+        full_projection_trackers = {}
+        image_reference_hidden_state_trackers = {}
+        image_reference_projection_trackers = {}
+        for trivial in ["black", "white", "noise"]:
+            if variant == "hidden_state":
+                name = f"trivial_{trivial}_full_information"
+                full_hidden_state_trackers[trivial] = HiddenStateTracking(dataset, vlm, name, parameters)
+                full_hidden_state_trackers[trivial].load_checkpoint()
+                name = f"trivial_{trivial}_image_reference"
+                image_reference_hidden_state_trackers[trivial] = HiddenStateTracking(dataset, vlm, name, parameters)
+                image_reference_hidden_state_trackers[trivial].load_checkpoint()
+            elif variant == "vocab_projection":
+                name = f"trivial_{trivial}_full_information"
+                full_projection_trackers[trivial] = VocabProjectionTracking(dataset, vlm, name, parameters)
+                full_projection_trackers[trivial].load_checkpoint()
+                name = f"trivial_{trivial}_image_reference"
+                image_reference_projection_trackers[trivial] = VocabProjectionTracking(dataset, vlm, name, parameters)
+                image_reference_projection_trackers[trivial].load_checkpoint()
+        else:
+            full_hidden_state_trackers[trivial] = None
+            full_projection_trackers[trivial] = None
+            image_reference_hidden_state_trackers[trivial] = None
+            image_reference_projection_trackers[trivial] = None
+
+            
 
         checkpoint_every = int(checkpoint_every * len(results_df))
         for idx, row in tqdm(results_df, total=len(results_df)):
@@ -107,11 +145,11 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
                 image_reference_question = data["image_reference_question"]
                 for trivial_image, trivial_name in zip([black, white, noise], ["black", "white", "noise"]):
                     response = vlm(trivial_image, full_information_question)
-                    results_df.loc[idx, f"trivial_{trivial_name}_full_information_response"] = response
+                    update_row(results_df, idx, f"trivial_{trivial_name}_full_information", response, hidden_state_tracker=full_hidden_state_trackers[trivial_name], projection_tracker=full_projection_trackers[trivial_name], completed=False)
                     response = vlm(trivial_image, image_reference_question)
-                    results_df.loc[idx, f"trivial_{trivial_name}_image_reference_response"] = response
+                    update_row(results_df, idx, f"trivial_{trivial_name}_image_reference", response, hidden_state_tracker=image_reference_hidden_state_trackers[trivial_name], projection_tracker=image_reference_projection_trackers[trivial_name], completed=False)
                 results_df.loc[idx, "trivial_complete"] = True
                 if idx % checkpoint_every == 0:  # This is okay because its sequential so it won't skip saving once it restarts
-                    results_df.to_csv(results_df_path, index=False)
-        results_df.to_csv(results_df_path, index=False)
+                    save(results_df, results_df_path, full_hidden_state_trackers, full_projection_trackers, image_reference_hidden_state_trackers, image_reference_projection_trackers)
+        save(results_df, results_df_path, full_hidden_state_trackers, full_projection_trackers, image_reference_hidden_state_trackers, image_reference_projection_trackers)
     return results_df_path

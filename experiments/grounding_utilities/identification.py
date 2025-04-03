@@ -2,7 +2,65 @@ import os
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import pandas as pd
+import pickle
 from tqdm import tqdm
+
+class HiddenStateTracking:
+    def __init__(self, dataset_name, vlm_name, run_variant, parameters):
+        self.dataset_name = dataset_name
+        self.vlm_name = vlm_name
+        self.run_variant = run_variant
+        self.parameters = parameters
+        self.hidden_states = {}
+        self.save_path = parameters["storage_dir"] + f"/hidden_states/{dataset_name}/{vlm_name}/{run_variant}/"
+        os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
+
+
+    def load_checkpoint(self):
+        if os.path.exists(self.save_path):
+            with open(self.save_path, "rb") as f:
+                self.hidden_states = pickle.load(f)
+        
+    def save_checkpoint(self):
+        with open(self.save_path, "wb") as f:
+            pickle.dump(self.hidden_states, f)
+
+    def add_hidden_state(self, idx, hidden_states):
+        if idx not in self.hidden_states:
+            self.hidden_states[idx] = hidden_states
+        else:
+            self.parameters["logger"].warning(f"Hidden state for index {idx} already exists. Overwriting.")
+            self.hidden_states[idx] = hidden_states
+
+class VocabProjectionTracking:
+    def __init__(self, dataset_name, vlm_name, run_variant, parameters):
+        self.dataset_name = dataset_name
+        self.vlm_name = vlm_name
+        self.run_variant = run_variant
+        self.parameters = parameters
+        self.kl_divergence = {}
+        self.projection_prob = {}
+        self.save_path = parameters["storage_dir"] + f"/vocab_projections/{dataset_name}/{vlm_name}/{run_variant}/"
+        os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
+
+
+    def load_checkpoint(self):
+        if os.path.exists(self.save_path):
+            with open(self.save_path, "rb") as f:
+                self.projections = pickle.load(f)
+        
+    def save_checkpoint(self):
+        with open(self.save_path, "wb") as f:
+            pickle.dump(self.projections, f)
+
+    def add_projection(self, idx, kl_divergence, projection_prob):
+        if idx not in self.kl_divergence:
+            self.kl_divergence[idx] = kl_divergence
+            self.projection_prob[idx] = projection_prob
+        else:
+            self.parameters["logger"].warning(f"Projection for index {idx} already exists. Overwriting.")
+            self.kl_divergence[idx] = kl_divergence
+            self.projection_prob[idx] = projection_prob
 
 
 def get_starting_df(dataset, results_df_path):
@@ -50,6 +108,25 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
     results_df.to_csv(results_df_path, index=False)
 
 
+def save(results_df, results_df_path, hidden_state_tracker=None, projection_tracker=None):
+    if hidden_state_tracker is not None:
+        hidden_state_tracker.save_checkpoint()
+    elif projection_tracker is not None:
+        projection_tracker.save_checkpoint()
+    results_df.to_csv(results_df_path, index=False)
+
+
+def update_row(results_df, idx, item_name, response, completed=True, hidden_state_tracker=None, projection_tracker=None):                    
+    results_df.loc[idx, f"{item_name}_response"] = response["text"]
+    results_df.loc[idx, f"{item_name}_response_perplexity"] = response["perplexity"]
+    if hidden_state_tracker is not None:
+        hidden_state_tracker.add_hidden_state(idx, response["hidden_states"])
+    elif projection_tracker is not None:
+        projection_tracker.add_projection(idx, response["kl_divergence"], response["projection_prob"])
+    if completed:
+        results_df.loc[idx, f"{item_name}_complete"] = True
+    return
+
 
 def do_identification(dataset, vlm, variant="default", parameters=None, checkpoint_every=0.1): # must consider OpenAI as well
     if parameters is None:
@@ -65,6 +142,16 @@ def do_identification(dataset, vlm, variant="default", parameters=None, checkpoi
         if checkpoint_every > 1 or checkpoint_every < 0:
             log_error(parameters["logger"], f"Invalid checkpoint_every value: {checkpoint_every}. Must be between 0 and 1.")
 
+        hidden_state_tracker = None
+        projection_tracker = None
+        if variant == "hidden_state":
+            hidden_state_tracker = HiddenStateTracking(dataset, vlm, "identification", parameters)
+            hidden_state_tracker.load_checkpoint()
+        elif variant == "vocab_projection":
+            projection_tracker = VocabProjectionTracking(dataset, vlm, "identification", parameters)
+            projection_tracker.load_checkpoint()
+            
+
         checkpoint_every = int(checkpoint_every * len(results_df))
         for idx, row in tqdm(results_df, total=len(results_df)):
             if not row["identification_complete"]:
@@ -72,10 +159,9 @@ def do_identification(dataset, vlm, variant="default", parameters=None, checkpoi
                 image = data["image"]
                 identification_question = data["identification_question"]
                 response = vlm(image, identification_question)
-                results_df.loc[idx, "identification_response"] = response
-                results_df.loc[idx, "identification_complete"] = True
+                update_row(results_df, idx, "identification", response, hidden_state_tracker=hidden_state_tracker, projection_tracker=projection_tracker)
                 if idx % checkpoint_every == 0:  # This is okay because its sequential so it won't skip saving once it restarts
-                    results_df.to_csv(results_df_path, index=False)
-        results_df.to_csv(results_df_path, index=False)
+                    save(results_df, results_df_path, hidden_state_tracker, projection_tracker)
+        save(results_df, results_df_path, hidden_state_tracker, projection_tracker)
 
     return results_df_path
