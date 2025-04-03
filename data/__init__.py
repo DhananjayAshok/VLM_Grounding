@@ -3,7 +3,7 @@ import click
 
 
 click.command()
-@click.option("--dataset_name", multiple=True, help="The name of the dataset(s) to use", default=["mnist"], options=["mnist", "cifar", "imagenet", "food", "landmarks"])
+@click.option("--dataset_name", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])
 @click.option("--validation_vlm", default="llava-v1.6-vicuna-13b-hf", help="The VLM that is used to check if the VLM can identify labels from the dataset")
 @click.pass_obj
 def setup_data(parameters, dataset_name, validation_vlm):
