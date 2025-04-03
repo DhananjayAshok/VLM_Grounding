@@ -1,0 +1,172 @@
+IDENTIFICATION_EVALUATOR_CONTEXT = """
+You are an impartial and logical evaluator tasked with analyzing two sentences and determining if the candidate has identified the same object as the reference. 
+"""
+
+IDENTIFICATION_EXAMPLE_1_Q = """
+Candidate: The object in the image is a golf ball
+Reference: Golf Ball
+"""
+
+IDENTIFICATION_EXAMPLE_1_A = """
+Explanation: The candidate sentence identifies the object correct as a golf ball
+Judgment: PASS [STOP]
+"""
+
+IDENTIFICATION_EXAMPLE_2_Q = """
+Candidate: The image shows a digit, however it is not clear what the digit is
+Reference: 6
+"""
+
+IDENTIFICATION_EXAMPLE_2_A = """
+Explanation: The candidate sentence does not identify the object correctly as a 6
+Judgment: FAIL [STOP]
+"""
+
+IDENTIFICATION_PROMPTS = [IDENTIFICATION_EVALUATOR_CONTEXT, (IDENTIFICATION_EXAMPLE_1_Q, IDENTIFICATION_EXAMPLE_1_A), (IDENTIFICATION_EXAMPLE_2_Q, IDENTIFICATION_EXAMPLE_2_A)]
+
+CORRECTNESS_EVALUATOR_CONTEXT = """
+You are an impartial and logical evaluator tasked with analyzing two sentences and determining if the candidate has the same overall meaning as the reference. 
+"""
+
+CORRECTNESS_EXAMPLE_1_Q = """
+Candidate: The ball is made of rubber
+Reference: Rubber
+"""
+
+CORRECTNESS_EXAMPLE_1_A = """
+Explanation: The candidate sentence identifies rubber as the material of the ball
+Judgment: PASS [STOP]
+"""
+
+CORRECTNESS_EXAMPLE_2_Q = """
+Candidate: Cold and dark water
+Reference: Freshwater
+"""
+
+CORRECTNESS_EXAMPLE_2_A = """
+Explanation: The candidate sentence identifies cold and dark water, which is different from freshwater
+Judgment: FAIL [STOP]
+"""
+
+CORRECTNESS_PROMPTS = [CORRECTNESS_EVALUATOR_CONTEXT, (CORRECTNESS_EXAMPLE_1_Q, CORRECTNESS_EXAMPLE_1_A), (CORRECTNESS_EXAMPLE_2_Q, CORRECTNESS_EXAMPLE_2_A)]
+
+QUESTION_EXTRACTION_CONTEXT = """
+You are a logical system tasked with extracting questions for an entity from a given text. The question should have a unique answer, and should be very short.
+"""
+
+QUESTION_EXTRACTION_EXAMPLE_1_Q = """
+Entity: Tench
+Text: The tench or doctor fish (Tinca tinca) is a fresh- and brackish-water fish of the order Cypriniformes found throughout Eurasia from Western Europe including Britain and Ireland east into Asia as far as the Ob and Yenisei Rivers. It is also found in Lake Baikal. It normally inhabits slow-moving freshwater habitats, particularly lakes and lowland rivers.
+"""
+
+QUESTION_EXTRACTION_EXAMPLE_1_A = """
+Rationale: The tench is said to also be called the doctor fish. There is no other alternate name. 
+Question: What is another name for the tench?
+Answer: doctor fish
+[SEP]
+Rationale: The order of the tench is Cypriniformes. Animals can only belong to one order.
+Question: What is the order of the tench?
+Answer: Cypriniformes
+[SEP]
+Rationale: The usual habbitat of the tench is freshwater. 
+Question: What kind of water does the tench usually live in?
+Answer: freshwater 
+[STOP]
+"""
+
+QUESTION_EXTRACTION_EXAMPLE_2_Q = """
+Entity: Baklava
+Text: Baklava ( , or ; Ottoman Turkish: باقلوا) is a layered pastry dessert made of filo pastry, filled with chopped nuts, and sweetened with syrup or honey. It was one of the most popular sweet pastries of Ottoman cuisine.\nThere are several theories for the origin of the pre-Ottoman version of the dish. In modern times, it is a common dessert among cuisines of countries in West Asia, Southeast Europe, Central Asia, and North Africa. It is also enjoyed in Pakistan and Afghanistan, where, although not a traditional sweet, it has carved out a niche in urban centers.
+"""
+
+QUESTION_EXTRACTION_EXAMPLE_2_A = """
+Rationale: Baklava is associated with Ottoman cuisine.
+Question: What ancient cuisine is Baklava associated with?
+Answer: Ottoman
+[SEP]
+Rationale: Baklava is made of filo pastry.
+Question: What kind of pastry is Baklava made of?
+Answer: filo
+[STOP]
+"""
+
+QUESTION_EXTRACTION_EXAMPLE_3_Q = """
+Entity: Eiffel Tower
+Text: The Eiffel Tower (  EYE-fəl; French: Tour Eiffel [tuʁ ɛfɛl] ) is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower from 1887 to 1889.\nLocally nicknamed "La dame de fer" (French for "Iron Lady"), it was constructed as the centerpiece of the 1889 World\'s Fair, and to crown the centennial anniversary of the French Revolution. Although initially criticised by some of France\'s leading artists and intellectuals for its design, it has since become a global cultural icon of France and one of the most recognisable structures in the world. The tower received 5,889,000 visitors in 2022. The Eiffel Tower is the most visited monument with an entrance fee in the world: 6.91 million people ascended it in 2015. It was designated a monument historique in 1964, and was named part of a UNESCO World Heritage Site ("Paris, Banks of the Seine") in 1991.\nThe tower is 330 metres (1,083 ft) tall, about the same height as an 81-storey building, and the tallest structure in Paris. Its base is square, measuring 125 metres (410 ft) on each side. 
+"""
+
+QUESTION_EXTRACTION_EXAMPLE_3_A = """
+Rationale: The Eiffel Tower is located in Paris.
+Question: In which city is the Eiffel Tower located?
+Answer: Paris
+[SEP]
+Rationale: The Eiffel Tower is made of wrought-iron.
+Question: What material is the Eiffel Tower made of?
+Answer: wrought-iron
+[SEP]
+Rationale: The Eiffel Tower was built to crown the centennial anniversary of the French Revolution.
+Question: The Eiffel Tower was built to celebrate the centennial anniversary of which event?
+Answer: French Revolution
+[STOP]
+"""
+
+QUESTION_EXTRACTION_PROMPTS = [QUESTION_EXTRACTION_CONTEXT, (QUESTION_EXTRACTION_EXAMPLE_1_Q, QUESTION_EXTRACTION_EXAMPLE_1_A), (QUESTION_EXTRACTION_EXAMPLE_2_Q, QUESTION_EXTRACTION_EXAMPLE_2_A), (QUESTION_EXTRACTION_EXAMPLE_3_Q, QUESTION_EXTRACTION_EXAMPLE_3_A)]
+
+QUESTION_ANSWER_CONTEXT = """
+Given a question and a context, provide a short answer to the question based on the information in the context.
+"""
+
+QUESTION_ANSWER_EXAMPLE_1_Q = """
+Text: The tench or doctor fish (Tinca tinca) is a fresh- and brackish-water fish of the order Cypriniformes found throughout Eurasia from Western Europe including Britain and Ireland east into Asia as far as the Ob and Yenisei Rivers. It is also found in Lake Baikal. It normally inhabits slow-moving freshwater habitats, particularly lakes and lowland rivers.
+Question: What is the tench also known as?
+"""
+
+QUESTION_ANSWER_EXAMPLE_1_A = """
+Answer: doctor fish [STOP]
+"""
+
+QUESTION_ANSWER_EXAMPLE_2_Q = """
+Text: Baklava ( , or ; Ottoman Turkish: باقلوا) is a layered pastry dessert made of filo pastry, filled with chopped nuts, and sweetened with syrup or honey. It was one of the most popular sweet pastries of Ottoman cuisine.\nThere are several theories for the origin of the pre-Ottoman version of the dish. In modern times, it is a common dessert among cuisines of countries in West Asia, Southeast Europe, Central Asia, and North Africa. It is also enjoyed in Pakistan and Afghanistan, where, although not a traditional sweet, it has carved out a niche in urban centers.
+Question: What kind of pastry is Baklava made of?
+"""
+
+QUESTION_ANSWER_EXAMPLE_2_A = """
+Answer: filo [STOP]
+"""
+
+QUESTION_ANSWER_PROMPTS = [QUESTION_ANSWER_CONTEXT, (QUESTION_ANSWER_EXAMPLE_1_Q, QUESTION_ANSWER_EXAMPLE_1_A), (QUESTION_ANSWER_EXAMPLE_2_Q, QUESTION_ANSWER_EXAMPLE_2_A)]
+
+QUESTION_UNIQUE_ANSWER_CONTEXT = """
+Given a text and a question, judge whether the question has a unique answer, or can be answered with multiple valid responses.
+"""
+
+QUESTION_UNIQUE_ANSWER_EXAMPLE_1_Q = """
+Text: The tench or doctor fish (Tinca tinca) is a fresh- and brackish-water fish of the order Cypriniformes found throughout Eurasia from Western Europe including Britain and Ireland east into Asia as far as the Ob and Yenisei Rivers. It is also found in Lake Baikal. It normally inhabits slow-moving freshwater habitats, particularly lakes and lowland rivers.
+Question: What is the tench also known as?
+"""
+
+QUESTION_UNIQUE_ANSWER_EXAMPLE_1_A = """
+Rationale: The text mentions only one other name for the tench, which is doctor fish.
+Judgment: Unique [STOP]
+"""
+
+QUESTION_UNIQUE_ANSWER_EXAMPLE_1_Q = """
+Text: The tench or doctor fish (Tinca tinca) is a fresh- and brackish-water fish of the order Cypriniformes found throughout Eurasia from Western Europe including Britain and Ireland east into Asia as far as the Ob and Yenisei Rivers. It is also found in Lake Baikal. It normally inhabits slow-moving freshwater habitats, particularly lakes and lowland rivers.
+Question: Which lake is the tench found in? 
+"""
+
+QUESTION_UNIQUE_ANSWER_EXAMPLE_1_A = """
+Rationale: The text mentions that the tench is found in Lake Baikal. However, it is very likely that the tench is found in other lakes as well.
+Judgment: Multiple [STOP]
+"""
+
+QUESTION_UNIQUE_ANSWER_PROMPTS = [QUESTION_UNIQUE_ANSWER_CONTEXT, (QUESTION_UNIQUE_ANSWER_EXAMPLE_1_Q, QUESTION_UNIQUE_ANSWER_EXAMPLE_1_A)]
+
+QUESTION_GENERAL_KNOWLEDGE_PROMPT = """
+You will be provided with a question and an entity. Your task is to assess whether the question can be answered based on general knowledge of the entity, or requires some additional context that cannot be known by someone who knows a lot about the entity.
+"""
+
+QUESTION_GENERAL_KNOWLEDGE_EXAMPLE_1_Q = """
+Entity: Tench
+Question: What is the tench also known as?
+"""
