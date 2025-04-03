@@ -93,9 +93,9 @@ class DataCreator():
             success = []
             if len(class_samples[class_name]) < limited_sample_warning:
                 self.parameters["logger"].warning(f"On dataset {self}, class {class_name} has less than {limited_sample_warning} samples. Validation may not be accurate.")
-            for sample in class_samples[class_name]:
+            for sample in tqdm(class_samples[class_name], desc=f"Running validation for class {class_name}"): 
                 response = vlm(sample, identification_prompt)
-                success.append(inclusion(response, class_name))
+                success.append(inclusion(response["text"], class_name))
             if np.mean(success) > validation_threshold:
                 self.validated_classes.append(class_name)
         return self.validated_classes
