@@ -1,0 +1,1 @@
+from data.mnist.setup_mnist import MNISTCreator

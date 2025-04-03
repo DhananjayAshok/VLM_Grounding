@@ -4,6 +4,7 @@ import os
 import json
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 from inference.vlms import get_vlm
@@ -87,7 +88,7 @@ class DataCreator():
         vlm = get_vlm(vlm_name)
         class_samples = self.get_class_samples()
         self.validated_classes = []
-        for class_name in class_samples:
+        for class_name in tqdm(class_samples):
             identification_prompt = self.get_identification_prefix(class_name)
             success = []
             if len(class_samples[class_name]) < limited_sample_warning:

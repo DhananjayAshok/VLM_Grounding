@@ -72,7 +72,7 @@ class MNISTCreator(DataCreator):
             images = []
             for sample_ind in label_samples:
                 image = self.dset[sample_ind][0]
-                images.append(image)
+                images.append(torchvision.transforms.functional.to_pil_image(image))
             class_samples[str(label)] = images
         return class_samples
 
@@ -109,6 +109,3 @@ class MNISTCreator(DataCreator):
     def get_identification_prefix(self, class_name):
         return f"Identify the digit in the image. \nAnswer: "
     
-
-if __name__ == "__main__":
-    create_mnist_qas(n_questions_per_class=10)
