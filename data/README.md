@@ -73,6 +73,7 @@ def  get_data_creator(dataset_name, parameters=None):
 	```bash
 	python main.py validate_classes --dataset_names cifar100
 	```
+    Note: This command uses a VLM for validation, and so should only be run with GPU access. 
 ---
 
 ## Question Answer Generation
