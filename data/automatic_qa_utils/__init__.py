@@ -13,7 +13,7 @@ import json
 @click.pass_obj
 def generate_questions(parameters, dataset_name, strong_llm):
     """
-    Generate questions for the given dataset using the specified LLMs.
+    Generate questions for dataset
     """
     data_creator = get_data_creator(dataset_name, parameters=parameters)
     class_labels = data_creator.load_validated_classes()
@@ -35,7 +35,7 @@ def generate_questions(parameters, dataset_name, strong_llm):
 @click.pass_obj
 def validate_questions(parameters, dataset_name, strong_llm):
     """
-    Validate the generated questions for the given dataset using the specified LLMs.
+    Validate generated questions for dataset
     """
     llm = get_llm_inference_class(strong_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_generated.json")
@@ -56,7 +56,7 @@ def validate_questions(parameters, dataset_name, strong_llm):
 @click.pass_obj
 def deduplicate_questions(parameters, dataset_name, weak_llm):
     """
-    Deduplicate the validated questions for the given dataset using the specified LLMs.
+    Deduplicate the validated questions for the dataset.
     """
     llm = get_llm_inference_class(weak_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_validated.json")

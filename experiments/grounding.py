@@ -26,6 +26,9 @@ def do_checked_evaluation(vlm, filename, metric_str, candidate_column, reference
 @click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection"]), help="The variant of the forward pass, controlling what information is stord.")
 @click.pass_obj
 def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_every, variant):
+    """
+    Run primary experiment for dataset
+    """
     dataset = get_dataset(dataset_name, parameters)
     if variant == "default":
         vlm = get_vlm(model)
