@@ -28,11 +28,11 @@ class  CIFAR100Creator(DataCreator):
 		super().__init__("cifar100",  all_class_names=fine_labels,  parameters=parameters)
 		self.dset,  self.labels  =  load_cifar100(raw_data_path=parameters["data_dir"]+"/raw/")
 		
-	def  get_random_images(self, class_name, n=10):
+	def  get_random_images(self, class_name : str, n=10):
 		"""
 		Get n random images from the dataset
 		"""
-		label_samples  =  np.where(self.labels  ==  int(class_name))[0]
+		label_samples  =  np.where(self.labels  ==  class_name)[0]
 		label_samples  =  np.random.choice(label_samples,  size=n,  replace=(n  >  len(label_samples)))
 		images  =  []
 		for  sample_ind  in  label_samples:
