@@ -12,7 +12,7 @@ def load_cifar100(raw_data_path):
     labels = []
     for i in range(len(dset)):
         img, label = dset[i]
-        index = fine_labels.index(label)
+        index = fine_labels[label]
         if index == -1:
             raise ValueError(f"Label {label} not found in fine_labels")
         labels.append(index)
