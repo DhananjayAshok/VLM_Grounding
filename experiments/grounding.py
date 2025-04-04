@@ -26,7 +26,7 @@ click.command()
 @click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection"]), help="The variant of the forward pass, controlling what information is stord.")
 @click.pass_obj
 def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_every, variant):
-    dataset = get_dataset(dataset_name)
+    dataset = get_dataset(dataset_name, parameters)
     if variant == "default":
         vlm = get_vlm(model)
     elif variant == "hidden_state":

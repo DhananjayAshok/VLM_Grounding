@@ -102,10 +102,7 @@ class DataCreator():
         dataset_path = os.path.join(self.parameters["storage_dir"], "processed_datasets", self.dataset_name)
         validated_classes_path = os.path.join(dataset_path, "validated_classes.pkl")
         if os.path.exists(validated_classes_path):
-            with open(validated_classes_path, "rb") as f:
-                self.validated_classes = pickle.load(f)
-            self.parameters["logger"].info(f"Loaded validated classes from {validated_classes_path}")
-            return self.validated_classes
+            return self.load_validated_classes()
         vlm = get_vlm(vlm_name)
         class_samples = self.get_class_samples()
         self.validated_classes = []
@@ -129,7 +126,18 @@ class DataCreator():
             self.parameters["logger"].warning("Classes not validated. Running class validation now. This will take a long time and may not work if you are running without a GPU")
             self.validate_classes()
 
-    
+    def load_validated_classes(self):
+        """
+        Loads the validated classes from the validated_classes.pkl file
+        """
+        dataset_path = os.path.join(self.parameters["storage_dir"], "processed_datasets", self.dataset_name)
+        validated_classes_path = os.path.join(dataset_path, "validated_classes.pkl")
+        if not os.path.exists(validated_classes_path):
+            log_error(self.parameters["logger"], f"Validated classes for {self.dataset_name} do not exist. Run validate_classes to generate them.")
+        with open(validated_classes_path, "rb") as f:
+            self.validated_classes = pickle.load(f)
+        return self.validated_classes
+
 
     def load_qas(self):
         """
@@ -140,6 +148,8 @@ class DataCreator():
                 'question': question1,
                 'options': None or [option1, option2, option3, option4...],
                 'answer': answer1 (equal to one of the options if options is not None),
+                'status': status (approved, unique, not unique, etc.),
+                'source': source (where the question was generated from, e.g. manual)
                 }, ...
             ]
         }
@@ -151,12 +161,16 @@ class DataCreator():
         parameters = load_parameters()
         storage_dir = parameters["storage_dir"]
         dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
-        qa_path = os.path.join(dataset_path, "qa_validated.json")
-        unvalidated_qa_path = os.path.join(dataset_path, "qa_unvalidated.json")
+        qa_path = os.path.join(dataset_path, "qa_deduplicated.json")
+        generated_qa_path = os.path.join(dataset_path, "qas_generated.json")
+        validated_qa_path = os.path.join(dataset_path, "qa_validated.json")
         if not os.path.exists(qa_path):
-            if os.path.exists(unvalidated_qa_path):
-                log_error(parameters["logger"], f"Validated QA pairs for {self.dataset_name} do not exist but unvalidated qa data exists.") # TODO: Add a message explaining how to validate the data
-            log_error(parameters["logger"], f"QA pairs for {self.dataset_name} do not exist, validated data does not exist either. Run setup_data to generate them.")
+            if os.path.exists(validated_qa_path):
+                log_error(parameters["logger"], f"Deduplicated QA pairs for {self.dataset_name} do not exist but validated data exists at {validated_qa_path}. Run the deduplicate_questions commands first.")
+            elif os.path.exists(generated_qa_path):
+                log_error(parameters["logger"], f"Deduplicated QA pairs for {self.dataset_name} do not exist but generated qa data exists at {generated_qa_path}. Run the validate_questions and then the deduplicate_questions commands first.")
+            else:
+                log_error(parameters["logger"], f"QA pairs for {self.dataset_name} do not exist, validated data and generated_data does not exist either. Run generate_questions to generate them and then validate_questions to validate them and finally deduplicate_questions to deduplicate them.")
 
         with open(qa_path, "r") as f:
             qas = json.load(f)
