@@ -216,7 +216,10 @@ class DataCreator():
         storage_dir = parameters["storage_dir"]
         dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
         if not os.path.exists(dataset_path):
-            os.makedirs(dataset_path)        
+            os.makedirs(dataset_path)
+        image_path = os.path.join(dataset_path, "images")
+        if not os.path.exists(image_path):
+            os.makedirs(image_path)  
         # saves a csv with columns: class_name, question_str, answer_str, question_source
         columns = ["class_name", "question_str", "answer_str", "question_source", "image_path"]
         data = []
@@ -233,9 +236,9 @@ class DataCreator():
                 source = qa["source"]
                 image_samples = self.get_random_images(class_name, images_per_question)
                 for image in image_samples:
-                    image_path = os.path.join(dataset_path, "images", f"{image_counter}.jpg")
+                    image_file_path = os.path.join(image_path, f"{image_counter}.png")
                     data.append([class_name, question, answer, source, image_path])
-                    image.save(image_path)
+                    image.save(image_file_path)
                     image_counter += 1
         df = pd.DataFrame(data, columns=columns)
         df.to_csv(os.path.join(dataset_path, "data.csv"), index=False)
