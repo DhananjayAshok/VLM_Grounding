@@ -59,6 +59,8 @@ def create_mnist_qas(n_questions_per_class=10, parameters=None):
 
 class MNISTCreator(DataCreator):
     def __init__(self, parameters=None):
+        if parameters is None:
+            parameters = load_parameters()
         super().__init__("mnist", parameters)
         self.dset, self.labels = load_mnist(raw_data_path=parameters["data_dir"]+"/raw/")
 
@@ -116,5 +118,7 @@ class MNISTCreator(DataCreator):
         (i.e. instances that will be discarded and not useful for analysis)
         """
         samples = self.get_class_samples()
-        return list(samples.keys())
+
+        self.validated_classes = list(samples.keys())
+        return self.validated_classes
     
