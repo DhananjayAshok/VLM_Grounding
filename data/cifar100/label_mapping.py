@@ -1,6 +1,6 @@
 fine_labels = [
     'apple',  # id 0
-    'aquarium_fish',
+    'fish', # was aquarium_fish
     'baby',
     'bear',
     'beaver',
@@ -38,27 +38,27 @@ fine_labels = [
     'hamster',
     'house',
     'kangaroo',
-    'computer_keyboard',
+    'keyboard', # was computer_keyboard
     'lamp',
-    'lawn_mower',
+    'lawn mower', # was lawn_mower
     'leopard',
     'lion',
     'lizard',
     'lobster',
     'man',
-    'maple_tree',
+    'maple tree', # was maple_tree
     'motorcycle',
     'mountain',
     'mouse',
     'mushroom',
-    'oak_tree',
+    'oak tree', # was oak_tree
     'orange',
     'orchid',
     'otter',
-    'palm_tree',
+    'palm tree', # was palm_tree
     'pear',
-    'pickup_truck',
-    'pine_tree',
+    'pickup truck', # was pickup_truck
+    'pine tree', # was pine_tree
     'plain',
     'plate',
     'poppy',
@@ -82,7 +82,7 @@ fine_labels = [
     'squirrel',
     'streetcar',
     'sunflower',
-    'sweet_pepper',
+    'sweet pepper', # was sweet_pepper
     'table',
     'tank',
     'telephone',
@@ -95,7 +95,7 @@ fine_labels = [
     'turtle',
     'wardrobe',
     'whale',
-    'willow_tree',
+    'willow tree', # was willow_tree
     'wolf',
     'woman',
     'worm',
@@ -103,12 +103,12 @@ fine_labels = [
 
 mapping_coarse_fine = {
     'aquatic mammals': ['beaver', 'dolphin', 'otter', 'seal', 'whale'],
-    'fish': ['aquarium_fish', 'flatfish', 'ray', 'shark', 'trout'],
+    'fish': ['fish', 'flatfish', 'ray', 'shark', 'trout'],
     'flowers': ['orchid', 'poppy', 'rose', 'sunflower', 'tulip'],
     'food containers': ['bottle', 'bowl', 'can', 'cup', 'plate'],
     'fruit and vegetables': ['apple', 'mushroom', 'orange', 'pear',
-                             'sweet_pepper'],
-    'household electrical device': ['clock', 'computer_keyboard', 'lamp',
+                             'sweet pepper'],
+    'household electrical device': ['clock', 'computer keyboard', 'lamp',
                                     'telephone', 'television'],
     'household furniture': ['bed', 'chair', 'couch', 'table', 'wardrobe'],
     'insects': ['bee', 'beetle', 'butterfly', 'caterpillar', 'cockroach'],
@@ -124,8 +124,8 @@ mapping_coarse_fine = {
     'people': ['baby', 'boy', 'girl', 'man', 'woman'],
     'reptiles': ['crocodile', 'dinosaur', 'lizard', 'snake', 'turtle'],
     'small mammals': ['hamster', 'mouse', 'rabbit', 'shrew', 'squirrel'],
-    'trees': ['maple_tree', 'oak_tree', 'palm_tree', 'pine_tree',
-              'willow_tree'],
-    'vehicles 1': ['bicycle', 'bus', 'motorcycle', 'pickup_truck', 'train'],
-    'vehicles 2': ['lawn_mower', 'rocket', 'streetcar', 'tank', 'tractor'],
+    'trees': ['maple tree', 'oak tree', 'palm tree', 'pine tree',
+              'willow tree'],
+    'vehicles 1': ['bicycle', 'bus', 'motorcycle', 'pickup truck', 'train'],
+    'vehicles 2': ['lawn mower', 'rocket', 'streetcar', 'tank', 'tractor'],
 }

@@ -1,6 +1,6 @@
 import click
 from utils.log_handling import log_error
-from inference.llms import get_llm_inference_class
+from inference.llms import get_llm
 from data.automatic_qa_utils.qa_validation import deduplicate_qas, validate_qas
 from data.automatic_qa_utils.qa_generation import generate_all_qas
 from data import get_data_creator
@@ -17,7 +17,7 @@ def generate_questions(parameters, dataset_name, strong_llm):
     """
     data_creator = get_data_creator(dataset_name, parameters=parameters)
     class_labels = data_creator.load_validated_classes()
-    llm = get_llm_inference_class(strong_llm)
+    llm = get_llm(strong_llm)
     qas = generate_all_qas(class_labels, llm, parameters=parameters)
     storage_dir = parameters["storage_dir"]
     dataset_path = os.path.join(storage_dir, "processed_datasets", dataset_name)
@@ -37,7 +37,7 @@ def validate_questions(parameters, dataset_name, strong_llm):
     """
     Validate generated questions for dataset
     """
-    llm = get_llm_inference_class(strong_llm)
+    llm = get_llm(strong_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_generated.json")
     if not os.path.exists(qas_path):
         log_error(parameters["logger"], f"QA file not found at {qas_path}. Please generate questions first.")
@@ -58,7 +58,7 @@ def deduplicate_questions(parameters, dataset_name, weak_llm):
     """
     Deduplicate validated questions for dataset.
     """
-    llm = get_llm_inference_class(weak_llm)
+    llm = get_llm(weak_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_validated.json")
     if not os.path.exists(qas_path):
         log_error(parameters["logger"], f"QA file not found at {qas_path}. Please validate questions first.")

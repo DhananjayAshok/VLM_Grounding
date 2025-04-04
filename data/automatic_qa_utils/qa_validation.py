@@ -1,4 +1,4 @@
-from inference.llms import get_llm_inference_class
+from inference.llms import get_llm
 from tqdm import tqdm
 from utils.parameter_handling import load_parameters
 from evaluation.metrics import two_way_inclusion

@@ -6,7 +6,7 @@ import torch
 import string
 from inference.constants import prompts_dict
 
-def get_llm_inference_class(name):
+def get_llm(name):
     return LMInference(variant=name)
 
 class LMInference:
@@ -28,7 +28,7 @@ class LMInference:
         self.set_role(role)
 
     def set_role(self, role):
-        assert role in self.prompts_dict.keys(), f"Role {role} not recognized"
+        assert role in self.prompts_dict.keys() or self.role is None, f"Role {role} not recognized"
         self.role = role
 
     def check_contain(self, text):
