@@ -1,6 +1,7 @@
 import click
 from data.data_holder import DataHolder
 from data.mnist.setup_mnist import MNISTCreator
+from data.cifar100.setup_cifar import CIFAR100Creator
 
 
 def get_data_creator(dataset_name, parameters=None):
@@ -9,8 +10,8 @@ def get_data_creator(dataset_name, parameters=None):
     """
     if dataset_name == "mnist":
         return MNISTCreator(parameters=parameters)
-    elif dataset_name == "cifar10":
-        pass
+    elif dataset_name == "cifar100":
+        return CIFAR100Creator(parameters=parameters)
     elif dataset_name == "food101":
         pass
     elif dataset_name == "landmarks":
