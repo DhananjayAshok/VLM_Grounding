@@ -61,7 +61,7 @@ class MNISTCreator(DataCreator):
     def __init__(self, parameters=None):
         if parameters is None:
             parameters = load_parameters()
-        super().__init__("mnist", parameters)
+        super().__init__("mnist", all_class_names=[str(i) for i in range(10)], parameters=parameters)
         self.dset, self.labels = load_mnist(raw_data_path=parameters["data_dir"]+"/raw/")
 
 
