@@ -1,5 +1,8 @@
 from utils.parameter_handling import load_parameters, compute_secondary_parameters
 import click
+from experiments.grounding import grounding_experiment
+from data.automatic_qa_utils import generate_questions, validate_questions, deduplicate_questions
+from data import setup_data
 
 
 loaded_parameters = load_parameters()
@@ -25,9 +28,11 @@ def example_command(parameters, example_option):
     pass
 """
 # Then add the custom command to the main group like this:
-"""
-main.add_command(example_command, name="example_command")
-"""
+main.add_command(generate_questions, name="generate_questions")
+main.add_command(validate_questions, name="validate_questions")
+main.add_command(deduplicate_questions, name="deduplicate_questions")
+main.add_command(setup_data, name="setup_data")
+main.add_command(grounding_experiment, name="grounding_experiment")
 
 if __name__ == "__main__":
     main()
