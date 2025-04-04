@@ -5,6 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import pickle
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 from inference.vlms import get_vlm
@@ -83,8 +84,15 @@ class DataCreator():
         If less than validation_threshold of the images are identified correctly, the class is not validated.
         We use this as a check to avoid using classes that seem like they will fail our eventual checks later on (to save compute)
 
-        If you want to bypass this, you can inherit and override this function to just set self.validated_classes to all the classes
+        If you want to bypass this, you can inherit and override this function to just set self.validated_classes to all the classes.
         """
+        dataset_path = os.path.join(self.parameters["storage_dir"], "processed_datasets", self.dataset_name)
+        validated_classes_path = os.path.join(dataset_path, "validated_classes.pkl")
+        if os.path.exists(validated_classes_path):
+            with open(validated_classes_path, "rb") as f:
+                self.validated_classes = pickle.load(f)
+            self.parameters["logger"].info(f"Loaded validated classes from {validated_classes_path}")
+            return self.validated_classes
         vlm = get_vlm(vlm_name)
         class_samples = self.get_class_samples()
         self.validated_classes = []
@@ -96,8 +104,11 @@ class DataCreator():
             for sample in tqdm(class_samples[class_name], desc=f"Running validation for class {class_name}"): 
                 response = vlm(sample, identification_prompt)
                 success.append(inclusion(response["text"], class_name))
+            self.parameters["logger"].info(f"Class {class_name} has success rate {(100*np.mean(success))}% success rate.")
             if np.mean(success) > validation_threshold:
                 self.validated_classes.append(class_name)
+        with open(validated_classes_path, "wb") as f:
+            pickle.dump(self.validated_classes, f)
         return self.validated_classes
 
     def check_class_validation(self):
@@ -172,11 +183,11 @@ class DataCreator():
         for qa in class_qas:
             qa_string = qa["question"]
             answer = qa["answer"]
-            source = qa["source"]
-            options = qa["options"]
-            if options is None:
+            source = qa["source"]            
+            if "options" not in qa:
                 qa_string = qa_string + "\nAnswer: "
             else:
+                options = qa["options"]
                 np.random.shuffle(options)
                 answer_index = options.index(answer)
                 for i, option in enumerate(options):
@@ -223,11 +234,11 @@ class DataCreator():
         df.to_csv(os.path.join(dataset_path, "data.csv"), index=False)
 
 
-    def create_validated_data(self, target_datapoints=1000):
+    def create_validated_data(self, vlm_name="llava-v1.6-vicuna-13b-hf", target_datapoints=1000):
         """
         Creates the dataset in the format that the model can use. 
         """
-        self.validate_classes()
+        self.validate_classes(vlm_name=vlm_name)
         self.load_qas()
         self.save_data(target_datapoints=target_datapoints)
         self.parameters["logger"].info(f"Dataset {self.dataset_name} created and saved to processed_datasets folder.")

@@ -1,5 +1,6 @@
 import click
-#from data.data_holder import DataHolder
+#from data.data_holder import DataCreator
+from data.mnist.setup_mnist import MNISTCreator
 
 
 click.command()
@@ -12,9 +13,20 @@ def setup_data(parameters, dataset_name, validation_vlm):
     # then it will read from these accepted labels and decide which ones to generate questions for
     # then it generates questions for the dataset and validates it
     # saves all to a common format
-    
+    if "mnist" in dataset_name:
+        mnist_creator = MNISTCreator(parameters=parameters)
+        mnist_creator.setup_data(validation_vlm)
 
-    pass
+    if "cifar10" in dataset_name:
+        pass
+
+    if "food101" in dataset_name:
+        pass
+
+    if "landmarks" in dataset_name:
+        pass
+
+
 
 
 def get_dataset(dataset_name: str):

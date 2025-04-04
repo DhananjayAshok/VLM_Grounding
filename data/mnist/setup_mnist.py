@@ -58,8 +58,7 @@ def create_mnist_qas(n_questions_per_class=10, parameters=None):
             
 
 class MNISTCreator(DataCreator):
-    def __init__(self):
-        parameters = load_parameters()
+    def __init__(self, parameters=None):
         super().__init__("mnist", parameters)
         self.dset, self.labels = load_mnist(raw_data_path=parameters["data_dir"]+"/raw/")
 
@@ -108,4 +107,14 @@ class MNISTCreator(DataCreator):
     
     def get_identification_prefix(self, class_name):
         return f"Identify the digit in the image. \nAnswer: "
+    
+
+    def validate_classes(self, vlm_name="llava-v1.6-vicuna-13b-hf", validation_threshold=0.2, limited_sample_warning=10):
+        """
+        I'm overriding this because I've already verified the classes, you should not do this unless you are confident. 
+        If you have unverified classes in this you will have excess bloat in your dataset 
+        (i.e. instances that will be discarded and not useful for analysis)
+        """
+        samples = self.get_class_samples()
+        return list(samples.keys())
     
