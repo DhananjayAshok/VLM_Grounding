@@ -18,7 +18,7 @@ def do_checked_evaluation(vlm, filename, metric_str, candidate_column, reference
     return     
 
 
-click.command()
+@click.command()
 @click.option("--dataset_name", help="The name of the dataset(s) to use", default="mnist")
 @click.option("--model", help="The VLM whose grounding ability is being tested", default="llava-v1.6-vicuna-13b-hf")
 @click.option("--stage", help="The stage of the grounding process", default="full_information", type=click.Choice(["identification", "full_information", "image_reference", "trivial", "evaluation", "all",]))
