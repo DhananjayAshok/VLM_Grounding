@@ -1,4 +1,4 @@
-from experiments.grounding_utilities import do_full_information, do_image_reference, do_identification, do_trivial
+from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial
 from utils.log_handling import log_error
 import os
 import click

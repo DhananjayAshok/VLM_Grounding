@@ -3,7 +3,7 @@ from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import pandas as pd
 from tqdm import tqdm
-from experiments.grounding_utilities.identification import handle_openai, HiddenStateTracking, VocabProjectionTracking, save, update_row
+from experiments.grounding_utils.identification import handle_openai, HiddenStateTracking, VocabProjectionTracking, save, update_row
 
 
 def get_starting_df(dataset, vlm, results_df_path, parameters):

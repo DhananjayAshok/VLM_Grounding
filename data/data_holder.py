@@ -226,7 +226,7 @@ class DataCreator():
         n_classes = len(self.validated_classes) 
         target_datapoints_per_class = (target_datapoints // n_classes) + 1
         image_counter = 0
-        for class_name in self.validated_classes:
+        for class_name in tqdm(self.validated_classes):
             qa_strings = self.get_qa_strings(class_name)
             n_questions = len(qa_strings)
             images_per_question = (target_datapoints_per_class // n_questions) + 1

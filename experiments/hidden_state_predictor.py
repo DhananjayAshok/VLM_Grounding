@@ -6,8 +6,8 @@ import os
 import numpy as np
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
-from experiments.hidden_modeling_utilities.model import Linear
-from experiments.hidden_modeling_utilities.metrics import compute_metrics, compute_conformal_metrics, compute_threshold_metrics
+from experiments.hidden_modeling_utils.model import Linear
+from experiments.hidden_modeling_utils.metrics import compute_metrics, compute_conformal_metrics, compute_threshold_metrics
 
 
 def get_xydfs(hidden, df):

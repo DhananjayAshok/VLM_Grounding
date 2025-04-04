@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from PIL import Image
 import random
-from experiments.grounding_utilities.identification import HiddenStateTracking, VocabProjectionTracking, update_row
+from experiments.grounding_utils.identification import HiddenStateTracking, VocabProjectionTracking, update_row
 
 def create_black_image(width, height):
     return Image.new("RGB", (width, height), "black")
