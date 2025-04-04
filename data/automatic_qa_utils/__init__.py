@@ -56,7 +56,7 @@ def validate_questions(parameters, dataset_name, strong_llm):
 @click.pass_obj
 def deduplicate_questions(parameters, dataset_name, weak_llm):
     """
-    Deduplicate the validated questions for the dataset.
+    Deduplicate validated questions for dataset.
     """
     llm = get_llm_inference_class(weak_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_validated.json")
