@@ -19,7 +19,7 @@ def get_data_creator(dataset_name, parameters=None):
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 
 
-click.command()
+@click.command()
 @click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])
 @click.option("--validation_vlm", default="llava-v1.6-vicuna-13b-hf", help="The VLM that is used to check if the VLM can identify labels from the dataset")
 @click.pass_obj

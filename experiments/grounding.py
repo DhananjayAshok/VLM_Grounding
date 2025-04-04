@@ -38,19 +38,19 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
     if "gpt" in str(vlm) and stage == "all":
         log_error(parameters["logger"], "OpenAI models do not support the 'all' stage. Please specify a specific stage.")
     if stage in ["identification", "all"]:
-        filename = do_identification(dataset_name, vlm, parameters)
+        filename = do_identification(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
         do_checked_evaluation(vlm, filename, "two_way_inclusion", "identification_response", "class_name", "identification_pass", parameters)
         
     if stage in ["full_information", "all"]:
-        filename = do_full_information(dataset_name, vlm, parameters)
+        filename = do_full_information(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
         do_checked_evaluation(vlm, filename, "two_way_inclusion", "full_information_response", "full_information_question", "full_information_pass", parameters)
 
     if stage in ["image_reference", "all"]:
-        filename = do_image_reference(dataset_name, vlm, parameters)
+        filename = do_image_reference(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
 
 
     if stage in ["trivial", "all"]:
-        filename = do_trivial(dataset_name, vlm, parameters)
+        filename = do_trivial(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
 
     if stage in ["evaluation", "all"]:
         filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
