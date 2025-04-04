@@ -68,6 +68,11 @@ def  get_data_creator(dataset_name, parameters=None):
 # ... rest of the file ...
 ```
 
+2.  **Run the Class Validation Script:**
+    * You must now validate the classes in your dataset to make our QA generation phase more efficient. Do this with the command (cifar100 example given):
+	```bash
+	python main.py validate_classes --dataset_names cifar100
+	```
 ---
 
 ## Question Answer Generation

@@ -9,7 +9,7 @@ import json
 
 @click.command()
 @click.option("--dataset_name", type=str, help="The name of the dataset(s) to use")
-@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-70B-Instruct")
+@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
 @click.pass_obj
 def generate_questions(parameters, dataset_name, strong_llm):
     """
@@ -31,7 +31,7 @@ def generate_questions(parameters, dataset_name, strong_llm):
 
 @click.command()
 @click.option("--dataset_name", type=str, help="The name of the dataset(s) to use")
-@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-70B-Instruct")
+@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
 @click.pass_obj
 def validate_questions(parameters, dataset_name, strong_llm):
     """

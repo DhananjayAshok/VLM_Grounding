@@ -104,7 +104,7 @@ class DataCreator():
         if os.path.exists(validated_classes_path):
             return self.load_validated_classes()
         vlm = get_vlm(vlm_name)
-        class_samples = self.get_class_samples()
+        class_samples = self.get_class_samples(n_samples=10)
         self.validated_classes = []
         for class_name in tqdm(class_samples):
             identification_prompt = self.get_identification_prefix(class_name)
@@ -258,11 +258,11 @@ class DataCreator():
         df.to_csv(os.path.join(dataset_path, "data.csv"), index=False)
 
 
-    def create_validated_data(self, vlm_name="llava-v1.6-vicuna-13b-hf", target_datapoints=1000):
+    def create_validated_data(self, target_datapoints=1000):
         """
         Creates the dataset in the format that the model can use. 
         """
-        self.validate_classes(vlm_name=vlm_name)
+        self.check_class_validation()
         self.load_qas()
         self.save_data(target_datapoints=target_datapoints)
         self.parameters["logger"].info(f"Dataset {self.dataset_name} created and saved to processed_datasets folder.")

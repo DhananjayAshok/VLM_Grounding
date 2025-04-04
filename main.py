@@ -2,7 +2,7 @@ from utils.parameter_handling import load_parameters, compute_secondary_paramete
 import click
 from experiments.grounding import grounding_experiment
 from data.automatic_qa_utils import generate_questions, validate_questions, deduplicate_questions
-from data import setup_data
+from data import setup_data, validate_classes
 
 
 loaded_parameters = load_parameters()
@@ -28,6 +28,7 @@ def example_command(parameters, example_option):
     pass
 """
 # Then add the custom command to the main group like this:
+main.add_command(validate_classes, name="validate_classes")
 main.add_command(generate_questions, name="generate_questions")
 main.add_command(validate_questions, name="validate_questions")
 main.add_command(deduplicate_questions, name="deduplicate_questions")
