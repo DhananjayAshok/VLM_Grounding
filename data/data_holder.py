@@ -21,7 +21,8 @@ def num_to_alph(num):
 
 
 class DataCreator():
-    def __init__(self, dataset_name: str, parameters=None):
+    def __init__(self, dataset_name: str, all_class_names=None, parameters=None):
+        self.all_class_names = all_class_names
         self.dataset_name = dataset_name.lower()
         self.qas = None
         self.validated_classes = None
@@ -31,17 +32,29 @@ class DataCreator():
             self.parameters = parameters
         
 
-    def get_class_samples(self):
+    def get_random_images(self, class_name, n=10):
+        """
+        Returns a list of at most n random images labelled as class_name
+        """
+        raise NotImplementedError
+    
+
+    def get_class_samples(self, n_samples=10):
         """
         Returns a dictionary of the form:
         {
             "class_name": [sample1: Image, sample2: Image, ...]
         }
-        class_names should be every class / label in the dataset (in string form, for identification by VLM)
-
-        You should try to have at least 10 samples. 
         """
-        raise NotImplementedError # TODO: Implement this function in your individual datasets
+        class_samples = {}
+        for label in self.all_class_names:
+            images = self.get_random_images(label, n_samples)
+            class_samples[str(label)] = []
+            for image in images:
+                if not isinstance(image, Image.Image):
+                    log_error(self.parameters["logger"], f"Image is not a PIL image. Image: {image}, type: {type(image)}")
+                class_samples[str(label)].append(image)
+        return class_samples
     
 
     def get_question_prefix(self, class_name: str = None):
@@ -116,12 +129,6 @@ class DataCreator():
             self.parameters["logger"].warning("Classes not validated. Running class validation now. This will take a long time and may not work if you are running without a GPU")
             self.validate_classes()
 
-
-    def get_random_images(self, class_name, n=5):
-        """
-        Returns a list of at most n random images labelled as class_name
-        """
-        raise NotImplementedError
     
 
     def load_qas(self):

@@ -64,19 +64,6 @@ class MNISTCreator(DataCreator):
         super().__init__("mnist", parameters)
         self.dset, self.labels = load_mnist(raw_data_path=parameters["data_dir"]+"/raw/")
 
-    def get_class_samples(self):
-        class_samples = {}
-        all_labels = list(set(self.labels))
-        for label in all_labels:
-            label_samples = np.where(self.labels == label)[0]
-            label_samples = np.random.choice(label_samples, size=10, replace=False)
-            images = []
-            for sample_ind in label_samples:
-                image = self.dset[sample_ind][0]
-                images.append(torchvision.transforms.functional.to_pil_image(image))
-            class_samples[str(label)] = images
-        return class_samples
-
 
     def get_question_prefix(self, class_name: str = None):
         """
@@ -122,3 +109,14 @@ class MNISTCreator(DataCreator):
         self.validated_classes = list(samples.keys())
         return self.validated_classes
     
+    def get_random_images(self, class_name, n=10):
+        """
+        Get n random images from the dataset
+        """
+        label_samples = np.where(self.labels == class_name)[0]
+        label_samples = np.random.choice(label_samples, size=n, replace=(n > len(label_samples)))
+        images = []
+        for sample_ind in label_samples:
+            image = self.dset[sample_ind][0]
+            images.append(torchvision.transforms.functional.to_pil_image(image))
+        return images    
