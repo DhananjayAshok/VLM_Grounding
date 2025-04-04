@@ -32,7 +32,7 @@ class CIFAR100Creator(DataCreator):
         """
         Get n random images from the dataset
         """
-        label_samples = np.where(self.labels == int(class_name))[0]
+        label_samples = np.where(self.labels == class_name)[0]
         label_samples = np.random.choice(label_samples, size=n, replace=(n > len(label_samples)))
         images = []
         for sample_ind in label_samples:
