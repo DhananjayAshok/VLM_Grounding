@@ -13,7 +13,7 @@ def reject_simple_failures(qas):
         if question.strip() == "" or answer.strip() == "":
             qa["status"] = "rejected_empty_question_answer"
             break
-        if answer.split(" ") > 7:
+        if len(answer.split(" ")) > 7:
             qa["status"] = "rejected_answer_too_long"
             break
         if entity_name.lower() in answer.lower():
