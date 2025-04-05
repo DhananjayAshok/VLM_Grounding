@@ -103,6 +103,8 @@ class DataCreator():
         validated_classes_path = os.path.join(dataset_path, "validated_classes.pkl")
         if os.path.exists(validated_classes_path):
             return self.load_validated_classes()
+        if not os.path.exists(dataset_path):
+            os.makedirs(dataset_path)
         vlm = get_vlm(vlm_name)
         class_samples = self.get_class_samples(n_samples=10)
         self.validated_classes = []

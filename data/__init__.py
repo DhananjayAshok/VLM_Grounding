@@ -25,7 +25,7 @@ def get_data_creator(dataset_name, parameters=None):
 @click.command()
 @click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])
 @click.option("--validation_vlm", default="llava-v1.6-vicuna-13b-hf", help="The VLM that is used to check if the VLM can identify labels from the dataset")
-@click.option('--validation_threshold', type=float, default=0.2, help='Will only consider a class validated if the VLM can identify more than this percentage of instances of that class.')
+@click.option('--validation_threshold', type=float, default=0.5, help='Will only consider a class validated if the VLM can identify more than this percentage of instances of that class.')
 @click.pass_obj
 def validate_classes(parameters, dataset_names, validation_vlm, validation_threshold):
     """

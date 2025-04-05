@@ -6,4 +6,4 @@ echo "Completed class validation. Now generating QA pairs, validating and dedupl
 python main.py full_qa_pipeline --dataset_name $dataset_name
 
 echo "Completed QA set up. Now setting up the dataset"
-python main.py setup_dataset --dataset_names $dataset_name
+python main.py setup_data --dataset_names $dataset_name
