@@ -1,7 +1,8 @@
-from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial
+from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial, do_final_evaluation
 from utils.log_handling import log_error
 import os
 import click
+import pandas as pd
 from evaluation.metrics import file_compute_metric_str, df_compute_metric_fn
 from data import get_dataset
 from inference.vlms import get_vlm
@@ -57,4 +58,9 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
 
     if stage in ["evaluation", "all"]:
         filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
+        df = pd.read_csv(filename)
+        df = do_final_evaluation(df, parameters)
+        filename = filename.replace("trivial_results.csv", "final_results.csv")
+        df.to_csv(filename, index=False)
+
 

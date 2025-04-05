@@ -12,7 +12,7 @@ class HiddenStateTracking:
         self.run_variant = run_variant
         self.parameters = parameters
         self.hidden_states = {}
-        self.save_path = parameters["storage_dir"] + f"/hidden_states/{dataset_name}/{vlm_name}/{run_variant}/"
+        self.save_path = parameters["storage_dir"] + f"/hidden_states/{dataset_name}/{vlm_name}/{run_variant}/hidden_states.pkl"
         os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
 
 
@@ -20,6 +20,8 @@ class HiddenStateTracking:
         if os.path.exists(self.save_path):
             with open(self.save_path, "rb") as f:
                 self.hidden_states = pickle.load(f)
+        else:
+            self.hidden_states = {}
         
     def save_checkpoint(self):
         with open(self.save_path, "wb") as f:
@@ -45,13 +47,25 @@ class VocabProjectionTracking:
 
 
     def load_checkpoint(self):
-        if os.path.exists(self.save_path):
-            with open(self.save_path, "rb") as f:
-                self.projections = pickle.load(f)
+        if os.path.exists(self.save_path+f"/kl_divergence.pkl"):
+            with open(self.save_path+f"/kl_divergence.pkl", "rb") as f:
+                self.kl_divergence = pickle.load(f)
+        else:
+            self.kl_divergence = {}
+        if os.path.exists(self.save_path+f"/projection_prob.pkl"):
+            with open(self.save_path+f"/projection_prob.pkl", "rb") as f:
+                self.projection_prob = pickle.load(f)
+        else:
+            self.projection_prob = {}
+        if len(self.kl_divergence) != len(self.projection_prob):
+            log_error(self.parameters["logger"], f"Mismatch between kl_divergence and projection_prob lengths. {len(self.kl_divergence)} vs {len(self.projection_prob)}. This is a bug and shouldn't be happening.")
+            raise ValueError("Mismatch between kl_divergence and projection_prob lengths.")
         
     def save_checkpoint(self):
-        with open(self.save_path, "wb") as f:
-            pickle.dump(self.projections, f)
+        with open(self.save_path+f"/kl_divergence.pkl", "wb") as f:
+            pickle.dump(self.kl_divergence, f)
+        with open(self.save_path+f"/projection_prob.pkl", "wb") as f:
+            pickle.dump(self.projection_prob, f)
 
     def add_projection(self, idx, kl_divergence, projection_prob):
         if idx not in self.kl_divergence:

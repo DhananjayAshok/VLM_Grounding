@@ -2,7 +2,7 @@ from utils.log_handling import log_error
 from evaluation.metrics import df_compute_metric_str
 
 
-def do_final_evaluation(parameters, df):
+def do_final_evaluation(df, parameters):
     reference_column = "answer"
     variants = ["full_information", "image_reference"]
     for trivial in ["black", "white", "noise"]:
