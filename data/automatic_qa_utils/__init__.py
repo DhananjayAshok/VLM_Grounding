@@ -19,7 +19,10 @@ def handle_question_generation(parameters, dataset_name, strong_llm):
         os.makedirs(dataset_path)
     qas_path = os.path.join(dataset_path, "qas_generated.json")
     if os.path.exists(qas_path):
-        log_error(parameters["logger"], f"QA file already exists at {qas_path}. Please delete it first.")
+        parameters["logger"].warning(f"QA file already exists at {qas_path}. Please delete it first to regenerate. Loading saved data")
+        with open(qas_path, "r") as f:
+            qas = json.load(f)
+        return qas
     llm = get_llm(strong_llm)
     qas = generate_all_qas(class_labels, llm, parameters=parameters)
     with open(qas_path, "w") as f:
@@ -34,7 +37,10 @@ def handle_question_validation(parameters, dataset_name, strong_llm):
         log_error(parameters["logger"], f"QA file not found at {qas_path}. Please generate questions first.")
     qa_validation_path = qas_path.replace("qas_generated.json", "qas_validated.json")
     if os.path.exists(qa_validation_path):
-        log_error(parameters["logger"], f"QA validation file already exists at {qa_validation_path}. Please delete it first.")
+        parameters["logger"].warning(f"QA validation file already exists at {qa_validation_path}. Please delete it first to revalidate. Loading saved data")
+        with open(qa_validation_path, "r") as f:
+            qas = json.load(f)
+        return qas
     qas = json.load(open(qas_path, "r"))
     validate_qas(qas, llm)
     with open(qa_validation_path, "w") as f:
@@ -48,7 +54,10 @@ def handle_question_deduplication(parameters, dataset_name, weak_llm):
         log_error(parameters["logger"], f"QA file not found at {qas_path}. Please validate questions first.")
     deduped_qas_path = qas_path.replace("qas_validated.json", "qas_deduplicated.json")
     if os.path.exists(deduped_qas_path):
-        log_error(parameters["logger"], f"Deduplicated QA file already exists at {deduped_qas_path}. Please delete it first.")
+        parameters["logger"].warning(f"QA deduplication file already exists at {deduped_qas_path}. Please delete it first to rededuplicate. Loading saved data")
+        with open(deduped_qas_path, "r") as f:
+            qas = json.load(f)
+        return qas
     qas = json.load(open(qas_path, "r"))
     deduplicate_qas(qas, llm, parameters=parameters)
     with open(deduped_qas_path, "w") as f:
