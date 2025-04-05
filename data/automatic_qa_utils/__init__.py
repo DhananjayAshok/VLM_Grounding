@@ -7,13 +7,9 @@ from data import get_data_creator
 import os
 import json
 
-@click.command()
-@click.option("--dataset_name", type=str, help="The name of the dataset(s) to use")
-@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
-@click.pass_obj
-def generate_questions(parameters, dataset_name, strong_llm):
+def handle_question_generation(parameters, dataset_name, strong_llm):
     """
-    Generate questions for dataset
+    Handle question generation for a dataset
     """
     data_creator = get_data_creator(dataset_name, parameters=parameters)
     class_labels = data_creator.load_validated_classes()
@@ -29,14 +25,7 @@ def generate_questions(parameters, dataset_name, strong_llm):
     parameters["logger"].info(f"Generated {len(qas)} questions for {dataset_name} and saved to {qas_path}")
     return qas
 
-@click.command()
-@click.option("--dataset_name", type=str, help="The name of the dataset(s) to use")
-@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
-@click.pass_obj
-def validate_questions(parameters, dataset_name, strong_llm):
-    """
-    Validate generated questions for dataset
-    """
+def handle_question_validation(parameters, dataset_name, strong_llm):
     llm = get_llm(strong_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_generated.json")
     if not os.path.exists(qas_path):
@@ -50,14 +39,7 @@ def validate_questions(parameters, dataset_name, strong_llm):
         json.dump(qas, f)
 
 
-@click.command()
-@click.option("--dataset_name", type=str, help="The name of the dataset(s) to use")
-@click.option("--weak_llm", type=str, help="The name of the weak LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
-@click.pass_obj
-def deduplicate_questions(parameters, dataset_name, weak_llm):
-    """
-    Deduplicate validated questions for dataset.
-    """
+def handle_question_deduplication(parameters, dataset_name, weak_llm):
     llm = get_llm(weak_llm)
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_validated.json")
     if not os.path.exists(qas_path):
@@ -69,6 +51,54 @@ def deduplicate_questions(parameters, dataset_name, weak_llm):
     deduplicate_qas(qas, llm, parameters=parameters)
     with open(deduped_qas_path, "w") as f:
         json.dump(qas, f)
+
+
+@click.command()
+@click.option("--dataset_name", type=str, help="The name of the dataset to use")
+@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
+@click.pass_obj
+def generate_questions(parameters, dataset_name, strong_llm):
+    """
+    Generate questions for dataset
+    """
+    handle_question_generation(parameters, dataset_name, strong_llm)
+
+
+@click.command()
+@click.option("--dataset_name", type=str, help="The name of the dataset to use")
+@click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
+@click.pass_obj
+def validate_questions(parameters, dataset_name, strong_llm):
+    """
+    Validate generated questions for dataset
+    """
+    handle_question_validation(parameters, dataset_name, strong_llm)
+
+
+
+@click.command()
+@click.option("--dataset_name", type=str, help="The name of the dataset to use")
+@click.option("--weak_llm", type=str, help="The name of the weak LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
+@click.pass_obj
+def deduplicate_questions(parameters, dataset_name, weak_llm):
+    """
+    Deduplicate validated questions for dataset.
+    """
+    handle_question_deduplication(parameters, dataset_name, weak_llm)
+
+@click.command()
+@click.option("--dataset_name", type=str, help="The name of the dataset to use")
+@click.option("--llm", type=str, help="The name of the LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
+@click.pass_obj
+def full_qa_pipeline(parameters, dataset_name, llm):
+    """
+    Generate, validate and deduplicate questions for dataset
+    """
+    handle_question_generation(parameters, dataset_name, llm)
+    handle_question_validation(parameters, dataset_name, llm)
+    handle_question_deduplication(parameters, dataset_name, llm)
+
+
 
 
 

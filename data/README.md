@@ -67,15 +67,13 @@ def  get_data_creator(dataset_name, parameters=None):
 
 # ... rest of the file ...
 ```
-
-2.  **Run the Class Validation Script:**
-    * You must now validate the classes in your dataset to make our QA generation phase more efficient. Do this with the command (cifar100 example given):
-	```bash
-	python main.py validate_classes --dataset_names cifar100
-	```
-    Note: This command uses a VLM for validation, and so should only be run with GPU access. 
 ---
 
-## Question Answer Generation
+## Class Validation and Question Answer Generation
 
-Once these steps are completed, you can generate question-answer pairs for this dataset using the Wikipedia API.
+Once these steps are completed, you can validate the classes and generate question-answer pairs for the validated classes using (cifar100 example again):
+
+```bash
+bash scripts/setup_dataset.sh cifar100
+```
+Note: This command uses VLMs and LLMs for validation, and so should only be run with GPU access. 

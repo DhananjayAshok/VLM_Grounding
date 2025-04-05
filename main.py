@@ -1,7 +1,7 @@
 from utils.parameter_handling import load_parameters, compute_secondary_parameters
 import click
 from experiments.grounding import grounding_experiment
-from data.automatic_qa_utils import generate_questions, validate_questions, deduplicate_questions
+from data.automatic_qa_utils import generate_questions, validate_questions, deduplicate_questions, full_qa_pipeline
 from data import setup_data, validate_classes
 
 
@@ -32,6 +32,7 @@ main.add_command(validate_classes, name="validate_classes")
 main.add_command(generate_questions, name="generate_questions")
 main.add_command(validate_questions, name="validate_questions")
 main.add_command(deduplicate_questions, name="deduplicate_questions")
+main.add_command(full_qa_pipeline, name="full_qa_pipeline")
 main.add_command(setup_data, name="setup_data")
 main.add_command(grounding_experiment, name="grounding_experiment")
 

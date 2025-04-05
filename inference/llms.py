@@ -93,9 +93,8 @@ class LMInference:
         text = f"Question: {question1}\nAnswer: {answer1}\nQuestion: {question2}\nAnswer: {answer2}\nRationale: "
         return self.parse(self(text))
 
-    def perform_question_answering(self, question, text):
+    def perform_question_answering(self, question):
         assert question is not None
-        assert text is not None
         self.set_role("question_answering")
         text = f"Question: {question}\nAnswer: "
         return self.parse(self(text))
