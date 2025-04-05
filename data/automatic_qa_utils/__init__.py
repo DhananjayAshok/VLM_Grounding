@@ -34,7 +34,7 @@ def handle_question_validation(parameters, dataset_name, strong_llm):
     if os.path.exists(qa_validation_path):
         log_error(parameters["logger"], f"QA validation file already exists at {qa_validation_path}. Please delete it first.")
     qas = json.load(open(qas_path, "r"))
-    validate_qas(qas, llm, parameters=parameters)
+    validate_qas(qas, llm)
     with open(qa_validation_path, "w") as f:
         json.dump(qas, f)
 
