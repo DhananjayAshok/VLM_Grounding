@@ -125,8 +125,13 @@ class DataCreator():
 
     def check_class_validation(self):
         if self.validated_classes is None:
-            self.parameters["logger"].warning("Classes not validated. Running class validation now. This will take a long time and may not work if you are running without a GPU")
-            self.validate_classes()
+            validated_classes_path = os.path.join(self.parameters["storage_dir"], "processed_datasets", self.dataset_name, "validated_classes.pkl")
+            if os.path.exists(validated_classes_path):
+                self.validated_classes = self.load_validated_classes()
+            else:
+                self.parameters["logger"].warning("Classes not validated. Running class validation now. This will take a long time and may not work if you are running without a GPU")
+                self.validate_classes()
+
 
     def load_validated_classes(self):
         """
