@@ -159,7 +159,7 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
 @click.option("--run_variant", type=click.Choice(["identification","image_reference", "full_information", "trivial_black"]), default="image_reference", help="The variant of the prompt to use")
 @click.option("--metric", type=click.Choice(["two_way_inclusion", "exact_match"]), default="two_way_inclusion", help="The metric to use as the label")
 @click.pass_obj
-def main(parameters, datasets, vlm, layer, run_variant, metric):
+def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, metric):
     np.random.seed(parameters["random_seed"])
     if len(datasets) == 1:
         parameters["logger"].info(f"Only one dataset {datasets[0]} found. Using that for training and testing.")
