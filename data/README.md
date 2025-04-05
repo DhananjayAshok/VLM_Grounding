@@ -36,8 +36,8 @@ class  CIFAR100Creator(DataCreator):
 		label_samples  =  np.random.choice(label_samples,  size=n,  replace=(n  >  len(label_samples)))
 		images  =  []
 		for  sample_ind  in  label_samples:
-		image  =  self.dset[sample_ind][0]
-		images.append(image)
+		    image  =  self.dset[sample_ind][0]
+		    images.append(image)
 		return  images
 ```
 
@@ -59,7 +59,7 @@ def  get_data_creator(dataset_name, parameters=None):
 	Returns the data creator object for the given dataset name
 	"""
 	if  dataset_name  ==  "mnist":
-		return  MNISTCreator(parameters=parameters)
+	    return  MNISTCreator(parameters=parameters)
 	elif  dataset_name  ==  "cifar100":
 		return  CIFAR100Creator(parameters=parameters)
 	else:
