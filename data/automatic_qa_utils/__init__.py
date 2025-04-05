@@ -13,13 +13,15 @@ def handle_question_generation(parameters, dataset_name, strong_llm):
     """
     data_creator = get_data_creator(dataset_name, parameters=parameters)
     class_labels = data_creator.load_validated_classes()
-    llm = get_llm(strong_llm)
-    qas = generate_all_qas(class_labels, llm, parameters=parameters)
     storage_dir = parameters["storage_dir"]
     dataset_path = os.path.join(storage_dir, "processed_datasets", dataset_name)
     if not os.path.exists(dataset_path):
         os.makedirs(dataset_path)
     qas_path = os.path.join(dataset_path, "qas_generated.json")
+    if os.path.exists(qas_path):
+        log_error(parameters["logger"], f"QA file already exists at {qas_path}. Please delete it first.")
+    llm = get_llm(strong_llm)
+    qas = generate_all_qas(class_labels, llm, parameters=parameters)
     with open(qas_path, "w") as f:
         json.dump(qas, f)
     parameters["logger"].info(f"Generated {len(qas)} questions for {dataset_name} and saved to {qas_path}")
