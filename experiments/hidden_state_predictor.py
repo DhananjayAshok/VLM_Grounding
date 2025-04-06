@@ -185,4 +185,4 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
         do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, prediction_dir=results_dir, parameters=parameters)    
 
 if __name__ == "__main__":
-    main()
+    fit_hidden_state_predictor()
