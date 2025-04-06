@@ -15,7 +15,7 @@ The process involves creating a dedicated data handler for your new dataset and 
 1.  **Create a New Dataset Submodule:**
     * Navigate to the main `data` module directory within the project structure.
     * Create a new Python file (e.g., `your_dataset_name.py`) within the `data` directory. This file will contain the logic specific to your dataset.
-    * Inside this new file, define a class for your dataset. This class **must inherit** from the `DataCreator` base class located in [`data/data_holder.py`](). 
+    * Inside this new file, define a class for your dataset. This class **must inherit** from the `DataCreator` base class located in [`data/data_creator.py`](). 
 
 For [example](data/cifar100/setup_cifar.py), CIFAR100 is set up as
 
@@ -42,16 +42,16 @@ class  CIFAR100Creator(DataCreator):
 ```
 
 2.  **Register the New Data Creator:**
-    * Open the `data/__init__.py` file. This file acts as a factory or entry point for accessing different data creators.
+    * Open the `data/data_holder.py` file. This file acts as a factory or entry point for accessing different data creators.
     * **Import** the new class you just created (`YourDatasetNameDataCreator`) at the top of `data/__init__.py`.
 
-    * Locate the function responsible for providing the correct data creator instance (often named something like `get_data_creator`).
-    * **Modify** this function to include logic for instantiating your `YourDatasetNameDataCreator`. This usually involves checking an input argument (like a dataset name string) and returning the corresponding creator instance.
+    * Locate the function responsible for providing the correct data creator instance (`get_data_creator`).
+    * **Modify** this function to include logic for instantiating your `YourDatasetNameDataCreator`. This involves checking an input argument (like a dataset name string) and returning the corresponding creator instance.
 
-Continuing the CIFAR100 example, it is added to the init file like so:
+Continuing the CIFAR100 example, it is added to the `data/data_holder.py` file like so:
 
 ```python
-# data/__init__.py
+# data/data_holder.py
 from  data.cifar100.setup_cifar  import  CIFAR100Creator
 
 def  get_data_creator(dataset_name, parameters=None):

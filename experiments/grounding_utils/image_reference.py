@@ -16,9 +16,9 @@ def get_starting_df(dataset, vlm, results_df_path, parameters):
         un_evaluated_results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/full_information_results.csv"
         if os.path.exists(results_path):
             results_df = pd.read_csv(results_path)
-            results_df["image_reference_complete"] = False
+            results_df["image_reference_complete"] = True
             pass_row_idx = results_df[results_df["full_information_pass"]].index
-            results_df.loc[pass_row_idx, "image_reference_complete"] = True
+            results_df.loc[pass_row_idx, "image_reference_complete"] = False
         elif os.path.exists(un_evaluated_results_path):
             log_error(parameters["logger"], f"Un-evaluated full information results found for {dataset} and {vlm}. Please evaluate them first.")
         else:
@@ -38,7 +38,7 @@ def do_image_reference(dataset, vlm, variant="default",  parameters=None, checkp
 
         if results_df["image_reference_complete"].all():
             parameters["logger"].warning(f"Image reference script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
-            return results_df
+            return results_df_path
         if checkpoint_every > 1 or checkpoint_every < 0:
             log_error(parameters["logger"], f"Invalid checkpoint_every value: {checkpoint_every}. Must be between 0 and 1.")
 

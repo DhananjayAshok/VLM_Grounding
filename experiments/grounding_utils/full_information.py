@@ -16,10 +16,10 @@ def get_starting_df(dataset, vlm, results_df_path, parameters):
         un_evaluated_results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/identification_results.csv"
         if os.path.exists(results_path):
             results_df = pd.read_csv(results_path)
-            results_df["full_information_complete"] = False
+            results_df["full_information_complete"] = True
             # if identification pass then say full_information_complete is True
             pass_row_idx = results_df[results_df["identification_pass"]].index
-            results_df.loc[pass_row_idx, "full_information_complete"] = True
+            results_df.loc[pass_row_idx, "full_information_complete"] = False
         elif os.path.exists(un_evaluated_results_path):
             log_error(parameters["logger"], f"Un-evaluated identification results found for {dataset} and {vlm}. Please evaluate them first.")
         else:

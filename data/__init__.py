@@ -1,26 +1,5 @@
 import click
-from data.data_holder import DataHolder
-from data.mnist.setup_mnist import MNISTCreator
-from data.cifar100.setup_cifar import CIFAR100Creator
-
-
-def get_data_creator(dataset_name, parameters=None):
-    """
-    Returns the data creator object for the given dataset name
-    """
-    if dataset_name == "mnist":
-        return MNISTCreator(parameters=parameters)
-    elif dataset_name == "cifar100":
-        return CIFAR100Creator(parameters=parameters)
-    elif dataset_name == "food101":
-        pass
-    elif dataset_name == "landmarks":
-        pass
-    else:
-        raise ValueError(f"Unknown dataset name: {dataset_name}")
-
-
-
+from data.data_holder import DataHolder, get_data_creator
 
 @click.command()
 @click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])

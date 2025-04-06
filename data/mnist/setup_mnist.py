@@ -1,7 +1,7 @@
 import torchvision
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
-from data.data_holder import DataCreator
+from data.data_creator import DataCreator
 import numpy as np
 import json
 import os
@@ -63,6 +63,7 @@ class MNISTCreator(DataCreator):
             parameters = load_parameters()
         super().__init__("mnist", all_class_names=[str(i) for i in range(10)], parameters=parameters)
         self.dset, self.labels = load_mnist(raw_data_path=parameters["data_dir"]+"/raw/")
+        self.object_str = "digit"
 
 
     def get_question_prefix(self, class_name: str = None):
