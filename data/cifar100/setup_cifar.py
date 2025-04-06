@@ -2,7 +2,7 @@ import torchvision
 import numpy as np
 
 from data.cifar100.label_mapping import fine_labels, mapping_coarse_fine
-from data.data_holder import DataCreator
+from data.data_creator import DataCreator
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 
