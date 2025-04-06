@@ -46,7 +46,7 @@ def deduplicate_qas_inclusion(qas):
             continue
     
 def deduplicate_qas_llm(qas, llm):
-    for i, qa in tqdm(enumerate(qas)):
+    for i, qa in tqdm(enumerate(qas), desc="Deduplicating QAs"):
         if "rejected" in qa["status"]:
             continue
         for j, deduped_qa in tqdm(enumerate(qas[:i])):
@@ -61,7 +61,7 @@ def deduplicate_qas_llm(qas, llm):
 def verify_qa(qas, llm, mcq=False, random_seed=42):
     if mcq:
         np.random.seed(random_seed)
-    for qa in tqdm(qas):
+    for qa in tqdm(qas, desc="Verifying Question Answerability"):
         if "rejected" in qa["status"]:
             continue
         if not mcq:

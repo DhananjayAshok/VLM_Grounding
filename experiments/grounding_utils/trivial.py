@@ -103,7 +103,7 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
         results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
         if results_df["trivial_complete"].all():
             parameters["logger"].warning(f"Image reference script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
-            return results_df
+            return results_df_path
         if checkpoint_every > 1 or checkpoint_every < 0:
             log_error(parameters["logger"], f"Invalid checkpoint_every value: {checkpoint_every}. Must be between 0 and 1.")
 

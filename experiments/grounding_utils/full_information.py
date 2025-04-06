@@ -37,7 +37,7 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
         results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
         if results_df["full_information_complete"].all():
             parameters["logger"].warning(f"Full information script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
-            return results_df
+            return results_df_path
         if checkpoint_every > 1 or checkpoint_every < 0:
             log_error(parameters["logger"], f"Invalid checkpoint_every value: {checkpoint_every}. Must be between 0 and 1.")
 
