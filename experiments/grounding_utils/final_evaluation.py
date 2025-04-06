@@ -22,9 +22,9 @@ def do_final_evaluation(df, parameters):
                 output_column = f"{metric}_{candidate_column}"
                 output_columns.append(output_column)
             # take the min over these columns
-            df[f"{metric}_trivial_min_{variant}_response"] = df[[output_columns]].min(axis=1)
+            df[f"{metric}_trivial_min_{variant}_response"] = df[output_columns].min(axis=1)
             # take the max over these columns
-            df[f"{metric}_trivial_max_{variant}_response"] = df[[output_columns]].max(axis=1)
+            df[f"{metric}_trivial_max_{variant}_response"] = df[output_columns].max(axis=1)
             # take the mean over these columns
-            df[f"{metric}_trivial_mean_{variant}_response"] = df[[output_columns]].mean(axis=1)
+            df[f"{metric}_trivial_mean_{variant}_response"] = df[output_columns].mean(axis=1)
     return df
