@@ -53,7 +53,7 @@ def do_image_reference(dataset, vlm, variant="default",  parameters=None, checkp
             
 
         checkpoint_every = int(checkpoint_every * len(results_df))
-        for idx, row in tqdm(results_df, total=len(results_df)):
+        for idx, row in tqdm(results_df.iterrows(), total=len(results_df)):
             if not row["image_reference_complete"]:
                 data = dataset[idx]
                 image = data["image"]

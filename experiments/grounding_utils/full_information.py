@@ -52,7 +52,7 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
             
 
         checkpoint_every = int(checkpoint_every * len(results_df))
-        for idx, row in tqdm(results_df, total=len(results_df)):
+        for idx, row in tqdm(results_df.iterrows(), total=len(results_df)):
             if not row["full_information_complete"]:
                 data = dataset[idx]
                 image = data["image"]
