@@ -305,7 +305,7 @@ class DataHolder:
         explicit_prefix = self.data_creator.get_explicit_stating_question_prefix(row["class_name"])
         identification_prefix = self.data_creator.get_identification_prefix(row["class_name"])
         full_information_question = question_prefix + " " + row["question_str"]
-        reference_question_str = row["question_str"].replace(row["class_name"], "the object in the image")
+        reference_question_str = row["question_str"].replace(str(row["class_name"]), "the object in the image")
         explicit_question = explicit_prefix + " " + reference_question_str
         image_reference_question = question_prefix + " " + reference_question_str
 
