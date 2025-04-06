@@ -21,7 +21,7 @@ def do_checked_evaluation(vlm, filename, metric_str, candidate_column, reference
 
 @click.command()
 @click.option("--dataset_name", help="The name of the dataset(s) to use", default="mnist")
-@click.option("--model", help="The VLM whose grounding ability is being tested", default="llava-v1.6-vicuna-13b-hf")
+@click.option("--model", help="The VLM whose grounding ability is being tested", type=click.Choice(["llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "llava-v1.6-mistral-7b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b", "gpt-4o-mini", "gpt-4o"]), required=True)
 @click.option("--stage", help="The stage of the grounding process", default="full_information", type=click.Choice(["identification", "full_information", "image_reference", "trivial", "evaluation", "all",]))
 @click.option("--checkpoint_every", type=float, default=0.1, help="Checkpoint every x percent of the dataset")
 @click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection"]), help="The variant of the forward pass, controlling what information is stord.")
