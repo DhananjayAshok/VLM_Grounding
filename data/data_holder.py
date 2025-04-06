@@ -258,7 +258,7 @@ class DataCreator():
                 image_samples = self.get_random_images(class_name, images_per_question)
                 for image in image_samples:
                     image_file_path = os.path.join(image_path, f"{image_counter}.png")
-                    data.append([class_name, question, answer, source, image_path])
+                    data.append([class_name, question, answer, source, image_file_path])
                     image.save(image_file_path)
                     image_counter += 1
         df = pd.DataFrame(data, columns=columns)
