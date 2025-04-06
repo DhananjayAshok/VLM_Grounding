@@ -1,0 +1,4 @@
+from experiments.grounding_utils.full_information import do_full_information
+from experiments.grounding_utils.image_reference import do_image_reference
+from experiments.grounding_utils.identification import do_identification
+from experiments.grounding_utils.trivial import do_trivial
