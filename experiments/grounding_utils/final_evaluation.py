@@ -3,7 +3,7 @@ from evaluation.metrics import df_compute_metric_str
 
 
 def do_final_evaluation(df, parameters):
-    reference_column = "answer"
+    reference_column = "answer_str"
     variants = ["full_information", "image_reference"]
     for trivial in ["black", "white", "noise"]:
         variants.append(f"trivial_{trivial}_full_information")
