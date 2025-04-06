@@ -97,7 +97,6 @@ class MNISTCreator(DataCreator):
     def get_identification_prefix(self, class_name):
         return f"Identify the digit in the image. \nAnswer: "
     
-
     def validate_classes(self, vlm_name="llava-v1.6-vicuna-13b-hf", validation_threshold=0.2, limited_sample_warning=10):
         """
         I'm overriding this because I've already verified the classes, you should not do this unless you are confident. 
