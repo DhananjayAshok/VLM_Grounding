@@ -1,5 +1,6 @@
 import click
 from data.data_holder import DataHolder, get_data_creator
+from utils.parameter_handling import load_parameters
 
 @click.command()
 @click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])
@@ -32,8 +33,10 @@ def setup_data(parameters, dataset_names, target_datapoints):
 
 
 
-def get_dataset(dataset_name: str, parameters):
+def get_dataset(dataset_name: str, parameters=None):
     """
     Returns the dataset object for the given dataset name
     """
+    if parameters is None:
+        parameters = load_parameters()
     return DataHolder(dataset_name, parameters=parameters)
