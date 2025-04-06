@@ -46,10 +46,10 @@ def deduplicate_qas_inclusion(qas):
             continue
     
 def deduplicate_qas_llm(qas, llm):
-    for i, qa in tqdm(enumerate(qas), desc="Deduplicating QAs"):
+    for i, qa in tqdm(enumerate(qas), desc="Deduplicating QAs", total=len(qas)):
         if "rejected" in qa["status"]:
             continue
-        for j, deduped_qa in tqdm(enumerate(qas[:i])):
+        for j, deduped_qa in tqdm(enumerate(qas[:i]), total=len(qas[:i]), desc="Deduplicating QAs", leave=False):
             if "rejected" in deduped_qa["status"]:
                 continue
             if i == j:

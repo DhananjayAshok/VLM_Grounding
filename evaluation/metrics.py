@@ -19,7 +19,7 @@ def exact_match(candidate, reference):
 
 def bleu(candidate, reference):
     reference_tokens = [str(reference).split()]  # BLEU expects a list of lists for references
-    candidate_tokens = candidate.split()
+    candidate_tokens = str(candidate).split()
     # suppress UserWarning
     score = sentence_bleu(reference_tokens, candidate_tokens, smoothing_function=SmoothingFunction().method0, weights=(1, 0, 0, 0))
     return score
@@ -38,7 +38,7 @@ def sequential_compute_metric(metric_fn, candidates, references):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
         for candidate, reference in tqdm.tqdm(zip(candidates, references)):
-            if candidate is None or reference is None:
+            if candidate is None or reference is None or pd.isna(candidate) or pd.isna(reference):
                 scores.append(None)
             else:
                 scores.append(metric_fn(candidate, reference))
