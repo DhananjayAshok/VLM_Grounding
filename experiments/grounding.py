@@ -22,7 +22,7 @@ def do_checked_evaluation(vlm, filename, metric_str, candidate_column, reference
 @click.command()
 @click.option("--dataset_name", help="The name of the dataset(s) to use", default="mnist")
 @click.option("--model", help="The VLM whose grounding ability is being tested", type=click.Choice(["llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "llava-v1.6-mistral-7b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b", "gpt-4o-mini", "gpt-4o"]), required=True)
-@click.option("--stage", help="The stage of the grounding process", default="full_information", type=click.Choice(["identification", "full_information", "image_reference", "trivial", "evaluation", "all",]))
+@click.option("--stage", help="The stage of the grounding process", default="all", type=click.Choice(["identification", "full_information", "image_reference", "trivial", "evaluation", "all",]))
 @click.option("--checkpoint_every", type=float, default=0.1, help="Checkpoint every x percent of the dataset")
 @click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection"]), help="The variant of the forward pass, controlling what information is stored.", default="default")
 @click.pass_obj
@@ -42,19 +42,19 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
     if "gpt" in str(vlm) and stage == "all":
         log_error(parameters["logger"], "OpenAI models do not support the 'all' stage. Please specify a specific stage.")
     if stage in ["identification", "all"]:
-        filename = do_identification(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
+        filename = do_identification(dataset, vlm, parameters, checkpoint_every=checkpoint_every)
         do_checked_evaluation(vlm, filename, "two_way_inclusion", "identification_response", "class_name", "identification_pass", parameters)
         
     if stage in ["full_information", "all"]:
-        filename = do_full_information(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
+        filename = do_full_information(dataset, vlm, parameters, checkpoint_every=checkpoint_every)
         do_checked_evaluation(vlm, filename, "two_way_inclusion", "full_information_response", "full_information_question", "full_information_pass", parameters)
 
     if stage in ["image_reference", "all"]:
-        filename = do_image_reference(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
+        filename = do_image_reference(dataset, vlm, parameters, checkpoint_every=checkpoint_every)
 
 
     if stage in ["trivial", "all"]:
-        filename = do_trivial(dataset_name, vlm, parameters, checkpoint_every=checkpoint_every)
+        filename = do_trivial(dataset, vlm, parameters, checkpoint_every=checkpoint_every)
 
     if stage in ["evaluation", "all"]:
         filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
