@@ -33,7 +33,7 @@ def get_starting_df(dataset, vlm, results_df_path, parameters):
         if os.path.exists(results_path):
             results_df = pd.read_csv(results_path)
             results_df["trivial_complete"] = True
-            pass_row_idx = results_df[results_df["full_information_pass"]].index
+            pass_row_idx = results_df[results_df["full_information_pass"] == True].index
             results_df.loc[pass_row_idx, "trivial_complete"] = False
         else:
             log_error(parameters["logger"], f"No Image Reference results found for {dataset} and {vlm}. Please run the image reference script first.")
