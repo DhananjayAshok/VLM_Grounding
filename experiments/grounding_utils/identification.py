@@ -146,6 +146,8 @@ def do_identification(dataset, vlm, variant="default", parameters=None, checkpoi
     if parameters is None:
         parameters = load_parameters()
     results_df_path = parameters["results_dir"] + f"/{dataset}/{vlm}/identification_results.csv"
+    if not os.path.exists(os.path.dirname(results_df_path)):
+        os.makedirs(os.path.dirname(results_df_path), exist_ok=True)
     if "gpt" in str(vlm): # handle openAI differently
         handle_openai(dataset, vlm, results_df_path, parameters, variant="identification")
     else:
@@ -167,7 +169,7 @@ def do_identification(dataset, vlm, variant="default", parameters=None, checkpoi
             
 
         checkpoint_every = int(checkpoint_every * len(results_df))
-        for idx, row in tqdm(results_df.iterrows(), total=len(results_df)):
+        for idx, row in tqdm(results_df.iterrows(), total=len(results_df), desc=f"Identification for {dataset} on {vlm}"):
             if not row["identification_complete"]:
                 data = dataset[idx]
                 image = data["image"]

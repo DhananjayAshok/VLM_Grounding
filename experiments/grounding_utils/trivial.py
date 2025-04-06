@@ -136,7 +136,7 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
             
 
         checkpoint_every = int(checkpoint_every * len(results_df))
-        for idx, row in tqdm(results_df.iterrows(), total=len(results_df)):
+        for idx, row in tqdm(results_df.iterrows(), total=len(results_df), desc=f"Trivial for {dataset} on {vlm}"):
             if not row["trivial_complete"]:
                 data = dataset[idx]
                 image = data["image"]
