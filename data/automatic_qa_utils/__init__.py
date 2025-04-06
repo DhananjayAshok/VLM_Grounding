@@ -59,7 +59,7 @@ def handle_question_deduplication(parameters, dataset_name, weak_llm):
             qas = json.load(f)
         return qas
     qas = json.load(open(qas_path, "r"))
-    deduplicate_qas(qas, llm, parameters=parameters)
+    deduplicate_qas(qas, llm)
     with open(deduped_qas_path, "w") as f:
         json.dump(qas, f)
 
