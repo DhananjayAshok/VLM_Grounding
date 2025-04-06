@@ -1,4 +1,5 @@
-from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial, do_final_evaluation
+from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial
+from evaluation.grounding_evaluation import do_final_evaluation, log_final_evaluation
 from utils.log_handling import log_error
 import os
 import click
@@ -65,5 +66,6 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
         df = do_final_evaluation(df, parameters)
         filename = filename.replace("trivial_results.csv", "final_results.csv")
         df.to_csv(filename, index=False)
+        log_final_evaluation(df, parameters)
 
 

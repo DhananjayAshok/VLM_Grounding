@@ -45,7 +45,7 @@ def sequential_compute_metric(metric_fn, candidates, references):
     return scores
 
 
-def df_compute_metric_fn(metric_fn, df, candidate_column, reference_column, save=True, output_column=None, output_path=None, parameters=None):
+def df_compute_metric_fn(metric_fn, df, candidate_column, reference_column, save=True, output_column=None, output_path=None, parameters=None, verbose=False):
     if parameters is None:
         parameters = load_parameters()
     if candidate_column not in df.columns:
@@ -56,14 +56,15 @@ def df_compute_metric_fn(metric_fn, df, candidate_column, reference_column, save
     if not save and not output_column:
         return scores
     elif not save:
-        parameters["logger"].warning(f"Column {output_column} already found in df. Overwriting ...")
+        if verbose:
+            parameters["logger"].warning(f"Column {output_column} already found in df. Overwriting ...")
         df[output_column] = scores
         return df
     if output_column is None:
         log_error(parameters["logger"], "output_column must be specified if save is True.")
     if output_path is None:
         log_error(parameters["logger"], "output_path must be specified if save is True.")
-    if output_column in df.columns:
+    if output_column in df.columns and verbose:
         parameters["logger"].warning(f"Column {output_column} already found in df. Overwriting ...")
     df[output_column] = scores
     new_file = output_path
@@ -73,19 +74,19 @@ def df_compute_metric_fn(metric_fn, df, candidate_column, reference_column, save
     return df
 
 
-def df_compute_metric_str(metric_str, df, candidate_column, reference_column, save=True, output_column=None, output_path=None, parameters=None):
+def df_compute_metric_str(metric_str, df, candidate_column, reference_column, save=True, output_column=None, output_path=None, parameters=None, verbose=False):
     if metric_str not in metric_map:
         log_error(parameters["logger"], f"Metric {metric_str} not found in metric_map {metric_map.keys()}.")
     metric_fn = metric_map[metric_str]
-    return df_compute_metric_fn(metric_fn, df, candidate_column, reference_column, save, output_column, output_path, parameters)
+    return df_compute_metric_fn(metric_fn, df, candidate_column, reference_column, save, output_column, output_path, parameters, verbose)
 
     
 
-def file_compute_metric_str(metric_str, csv_file, candidate_column, reference_column, save=True, output_column=None, save_suffix="_evaluated", parameters=None):
+def file_compute_metric_str(metric_str, csv_file, candidate_column, reference_column, save=True, output_column=None, save_suffix="_evaluated", parameters=None, verbose=False):
     if parameters is None:
         parameters = load_parameters()
     if not os.path.exists(csv_file):
         log_error(parameters["logger"], f"File {csv_file} not found.")
     df = pd.read_csv(csv_file)
-    return df_compute_metric_str(metric_str, df, candidate_column, reference_column, save, output_column, csv_file.replace(".csv", f"{save_suffix}.csv"), parameters)
+    return df_compute_metric_str(metric_str, df, candidate_column, reference_column, save, output_column, csv_file.replace(".csv", f"{save_suffix}.csv"), parameters, verbose)
 

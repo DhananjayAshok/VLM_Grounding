@@ -2,7 +2,7 @@ from utils.log_handling import log_error
 from evaluation.metrics import df_compute_metric_str
 
 
-def do_final_evaluation(df, parameters):
+def do_final_evaluation(df, parameters, verbose=False):
     reference_column = "answer_str"
     variants = ["full_information", "image_reference"]
     for trivial in ["black", "white", "noise"]:
@@ -13,7 +13,7 @@ def do_final_evaluation(df, parameters):
     for metric in metrics:
         for candidate_column in candidate_columns:
             output_column = f"{metric}_{candidate_column}"
-            df = df_compute_metric_str(metric, df, candidate_column, reference_column, output_column=output_column, save=False, parameters=parameters)
+            df = df_compute_metric_str(metric, df, candidate_column, reference_column, output_column=output_column, save=False, parameters=parameters, verbose=verbose)
     for metric in metrics:
         for variant in ["full_information", "image_reference"]:
             output_columns = []
@@ -28,3 +28,23 @@ def do_final_evaluation(df, parameters):
             # take the mean over these columns
             df[f"{metric}_trivial_mean_{variant}_response"] = df[output_columns].mean(axis=1)
     return df
+
+
+
+def log_final_evaluation(df, parameters):
+    logger = parameters["logger"]
+    for column in df.columns:
+        if column.endswith("_pass"):
+            logger.info(f"{column}: {df[column].sum()}/{len(df)}")
+    response_cols = ["full_information_response", "image_reference_response"]
+    candidate_cols = response_cols.copy()
+    trivials = ["min", "max"]
+    for trivial in trivials:
+        for variant in response_cols:
+            candidate_cols.append(f"trivial_{trivial}_{variant}")
+    for log_metric in ["two_way_inclusion", "bleu"]:
+        for candidate_col in candidate_cols:
+            column = f"{log_metric}_{candidate_col}"
+            if column in df.columns:
+                nonnan = df[df["image_reference_response"].notna()]
+                logger.info(f"{column}: {nonnan[column].mean()}")
