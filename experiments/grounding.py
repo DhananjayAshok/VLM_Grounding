@@ -31,14 +31,17 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
     Run primary experiment for dataset
     """
     dataset = get_dataset(dataset_name, parameters)
-    if variant == "default":
-        vlm = get_vlm(model)
-    elif variant == "hidden_state":
-        vlm = get_vlm(model, hidden_state_tracking_mode=True)
-    elif variant == "vocab_projection":
-        vlm = get_vlm(model, vocab_projection_mode=True)
+    if stage != "evaluation":
+        if variant == "default":
+            vlm = get_vlm(model)
+        elif variant == "hidden_state":
+            vlm = get_vlm(model, hidden_state_tracking_mode=True)
+        elif variant == "vocab_projection":
+            vlm = get_vlm(model, vocab_projection_mode=True)
+        else:
+            log_error(parameters["logger"], f"Invalid variant: {variant}. Must be one of ['default', 'hidden_state', 'vocab_projection']")
     else:
-        log_error(parameters["logger"], f"Invalid variant: {variant}. Must be one of ['default', 'hidden_state', 'vocab_projection']")
+        vlm = model # just need the string
     if "gpt" in str(vlm) and stage == "all":
         log_error(parameters["logger"], "OpenAI models do not support the 'all' stage. Please specify a specific stage.")
     if stage in ["identification", "all"]:
