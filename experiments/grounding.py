@@ -47,7 +47,7 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
         
     if stage in ["full_information", "all"]:
         filename = do_full_information(dataset, vlm, parameters, checkpoint_every=checkpoint_every)
-        do_checked_evaluation(vlm, filename, "two_way_inclusion", "full_information_response", "full_information_question", "full_information_pass", parameters)
+        do_checked_evaluation(vlm, filename, "two_way_inclusion", "full_information_response", "answer", "full_information_pass", parameters)
 
     if stage in ["image_reference", "all"]:
         filename = do_image_reference(dataset, vlm, parameters, checkpoint_every=checkpoint_every)
