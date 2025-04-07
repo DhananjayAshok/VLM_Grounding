@@ -8,6 +8,7 @@ import pickle
 def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="identification"):
     if os.path.exists(results_df_path):
         results_df = pd.read_csv(results_df_path)
+        return results_df
     else:
         prev_runs = {"identification": None, "full_information": "identification", 
                      "image_reference": "full_information"}
