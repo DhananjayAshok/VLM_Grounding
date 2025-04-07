@@ -20,15 +20,16 @@ def handle_question_generation(parameters, dataset_name, strong_llm):
     qas_path = os.path.join(dataset_path, "qas_generated.json")
     if os.path.exists(qas_path):
         parameters["logger"].warning(f"QA file already exists at {qas_path}. Please delete it first to regenerate.")
-        return
-    if isinstance(strong_llm, str):
-        llm = get_llm(strong_llm)
+        qas = json.load(open(qas_path, "r"))
     else:
-        llm = strong_llm
-    qas = generate_all_qas(class_labels, llm, parameters=parameters)
-    with open(qas_path, "w") as f:
-        json.dump(qas, f)
-    parameters["logger"].info(f"Generated {len(qas)} questions for {dataset_name} and saved to {qas_path}")
+        if isinstance(strong_llm, str):
+            llm = get_llm(strong_llm)
+        else:
+            llm = strong_llm
+        qas = generate_all_qas(class_labels, llm, parameters=parameters)
+        with open(qas_path, "w") as f:
+            json.dump(qas, f)
+        parameters["logger"].info(f"Generated {len(qas)} questions for {dataset_name} and saved to {qas_path}")
 
 def handle_question_validation(parameters, dataset_name, strong_llm):
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_generated.json")
@@ -37,16 +38,17 @@ def handle_question_validation(parameters, dataset_name, strong_llm):
     qa_validation_path = qas_path.replace("qas_generated.json", "qas_validated.json")
     if os.path.exists(qa_validation_path):
         parameters["logger"].warning(f"QA validation file already exists at {qa_validation_path}. Please delete it first to revalidate.")
-        return
-    qas = json.load(open(qas_path, "r"))
-    if isinstance(strong_llm, str):
-        llm = get_llm(strong_llm)
+        qas = json.load(open(qa_validation_path, "r"))
     else:
-        llm = strong_llm
-    validate_qas(qas, llm)
-    with open(qa_validation_path, "w") as f:
-        json.dump(qas, f)
-    parameters["logger"].info(f"Validated questions for {dataset_name} and saved to {qa_validation_path}")
+        qas = json.load(open(qas_path, "r"))
+        if isinstance(strong_llm, str):
+            llm = get_llm(strong_llm)
+        else:
+            llm = strong_llm
+        validate_qas(qas, llm)
+        with open(qa_validation_path, "w") as f:
+            json.dump(qas, f)
+        parameters["logger"].info(f"Validated questions for {dataset_name} and saved to {qa_validation_path}")
     log_status_count(qas, parameters["logger"])
 
 
@@ -58,16 +60,17 @@ def handle_question_deduplication(parameters, dataset_name, weak_llm):
     deduped_qas_path = qas_path.replace("qas_validated.json", "qas_deduplicated.json")
     if os.path.exists(deduped_qas_path):
         parameters["logger"].warning(f"QA deduplication file already exists at {deduped_qas_path}. Please delete it first to rededuplicate.")
-        return 
-    qas = json.load(open(qas_path, "r"))
-    if isinstance(weak_llm, str):
-        llm = get_llm(weak_llm)
+        qas = json.load(open(deduped_qas_path, "r"))
     else:
-        llm = weak_llm
-    deduplicate_qas(qas, llm)
-    with open(deduped_qas_path, "w") as f:
-        json.dump(qas, f)
-    parameters["logger"].info(f"Deduplicated questions for {dataset_name} and saved to {deduped_qas_path}")
+        qas = json.load(open(qas_path, "r"))
+        if isinstance(weak_llm, str):
+            llm = get_llm(weak_llm)
+        else:
+            llm = weak_llm
+        deduplicate_qas(qas, llm)
+        with open(deduped_qas_path, "w") as f:
+            json.dump(qas, f)
+        parameters["logger"].info(f"Deduplicated questions for {dataset_name} and saved to {deduped_qas_path}")
     log_status_count(qas, parameters["logger"])
 
 def handle_mcq_question_generation(parameters, dataset_name, weak_llm):

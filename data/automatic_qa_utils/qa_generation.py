@@ -48,7 +48,9 @@ def generate_mcqas(qas, llm, parameters=None):
             question = qa["question"]
             answer = qa["answer"]
             options = [answer]
-            other_options = llm.perform_question_extraction_mcq(text, question, answer)        
+            other_options = llm.perform_question_extraction_mcq(text, question, answer)   
+            if len(other_options) == 0:     
+                continue
             qa["options"] = options + other_options
             mcqas[class_name].append(qa)
     return mcqas
