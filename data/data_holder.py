@@ -36,10 +36,10 @@ class DataHolder:
             self.parameters = load_parameters()
         else:
             self.parameters = parameters
-        data_df_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name + "_mcq" if mcq else dataset_name, "data.csv")
+        data_df_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "data.csv")
         self.data_df = pd.read_csv(data_df_path)
-        self.data_creator = get_data_creator(dataset_name, parameters, mcq=mcq)
-        self.mcq = mcq
+        self.data_creator = get_data_creator(dataset_name, parameters)
+        # handles the _mcq in the dataset_name itself
 
     def __len__(self):
         return len(self.data_df)
@@ -68,7 +68,7 @@ class DataHolder:
         return data
     
     def __str__(self):
-        return self.dataset_name + "_mcq" if self.mcq else self.dataset_name
+        return self.dataset_name
     
     def __repr__(self):
         return str(self)
