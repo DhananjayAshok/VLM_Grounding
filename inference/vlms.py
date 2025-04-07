@@ -26,7 +26,7 @@ def get_vlm(name, hidden_state_tracking_mode=False, vocab_projection_mode=False,
     elif "gpt" in name:
         if hidden_state_tracking_mode or vocab_projection_mode or attention_tracking_mode:
             log_error(parameters['logger'], "OpenAI does not support hidden state tracking, vocab projection or attention tracking.")
-        return OpenAIInference(variant=name)
+        return OpenAIInference(variant=name, parameters=parameters)
     else:
         raise ValueError(f"Model {name} not recognized.")
 
@@ -212,8 +212,11 @@ class BLIPInference(HuggingFaceInference):
 
 
 class OpenAIInference:
-    def __init__(self, variant="gpt-4o-mini"):
+    def __init__(self, variant="gpt-4o-mini", parameters=None):
         assert variant in ["gpt-4o", "gpt-4o-mini"]
+        if parameters is None:
+            parameters = load_parameters()
+        self.parameters = parameters
         self.client = OpenAI()
         self.variant = variant
         if not os.path.exists(openai_tmp_file_dir):
@@ -269,16 +272,16 @@ class OpenAIInference:
             batch_file = batch.output_file_id
             return self.read_batch_results(batch_file)
         else:
-            print(f"Batch {batch_name} is not completed. Returning None.")
+            self.parameters['logger'].warning(f"Batch {batch_name} is not completed. Returning None.")
             return None
 
     def __call__(self, image_texts, batch_name, ids=None):
         if os.path.exists(os.path.join(openai_tmp_file_dir, f"id_{batch_name}.txt")):
-            print(f"Batch {batch_name} already exists. Returning results from file.")
+            self.parameters['logger'].info(f"Batch {batch_name} already exists. Returning results from file.")
             return self.get_batch_results(batch_name)
         # otherwise
         if image_texts is None:
-            print(f"Got None for image_texts. Returning None.")
+            self.parameters['logger'].warning(f"Got None for image_texts. Returning None.")
             return None
         if ids is not None:
             assert len(image_texts) == len(ids), "Length of image_texts and ids should be the same."
