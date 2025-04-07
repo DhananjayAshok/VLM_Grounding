@@ -77,7 +77,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
             if len(idx_row) != 1:
                 log_error(parameters["logger"], f"Error in OpenAI results. Found {len(idx_row)} idx rows for idx {idx} in {key} results.")
             results_df.loc[idx, f"{key}_response"] = idx_row["response"].values[0]
-    results_df.loc[f"{variant}_complete"] = True
+    results_df[f"{variant}_complete"] = True
     results_df.to_csv(results_df_path, index=False)
 
 def save(results_df, results_df_path, full_hidden_state_trackers, full_projection_trackers, image_reference_hidden_state_trackers, image_reference_projection_trackers):
