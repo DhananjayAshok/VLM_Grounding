@@ -245,11 +245,23 @@ class DataCreator():
         columns = ["class_name", "question_str", "answer_str", "question_source", "image_path"]
         data = []
         n_classes = len(self.validated_classes) 
-        target_datapoints_per_class = (target_datapoints // n_classes) + 1
+        failed_classes = []
+        for class_name in self.validated_classes:
+            n_questions = len(self.get_qa_strings(class_name))
+            if n_questions == 0:
+                failed_classes.append(class_name)
+        if len(failed_classes) > 0:
+            parameters["logger"].warning(f"Some classes have no questions. These classes will be skipped: {failed_classes}")
+        real_n_classes = n_classes - len(failed_classes)
+        if real_n_classes == 0:
+            log_error(parameters["logger"], f"All classes have failed. Please check the validation process.")
+        target_datapoints_per_class = (target_datapoints // real_n_classes) + 1
         image_counter = 0
         for class_name in tqdm(self.validated_classes):
             qa_strings = self.get_qa_strings(class_name)
             n_questions = len(qa_strings)
+            if n_questions == 0:
+                continue
             images_per_question = (target_datapoints_per_class // n_questions) + 1
             for qa in qa_strings:
                 question = qa["question"]

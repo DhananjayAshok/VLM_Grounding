@@ -54,6 +54,8 @@ def deduplicate_qas_llm(qas, llm):
                 continue
             if i == j:
                 continue
+            if qa["entity_name"] != deduped_qa["entity_name"]:
+                continue
             if two_way_inclusion(qa["answer"], deduped_qa["answer"]): # then check whether it is a duplicate. Otherwise it is not
                 if llm.perform_question_duplicate_evaluation(qa["question"], qa["answer"], deduped_qa["question"], deduped_qa["answer"]):
                     qa["status"] = "rejected_duplicate_llm"
