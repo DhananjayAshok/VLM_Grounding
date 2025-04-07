@@ -41,7 +41,7 @@ def generate_mcqas(qas, llm, parameters=None):
     mcqas = {}
     for class_name in tqdm(qas.keys(), desc="Generating MCQAs"):
         mcqas[class_name] = []
-        for qa in qas[class_name]:
+        for qa in tqdm(qas[class_name], desc=f"Generating MCQAs for {class_name}", leave=False):
             if "accepted" not in qa["status"]:
                 continue
             text = qa["text"]
