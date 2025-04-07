@@ -77,19 +77,19 @@ class VocabProjectionTracking:
             self.projection_prob[idx] = projection_prob
 
 
-def get_starting_df(dataset, results_df_path):
+def get_starting_df(dataset, results_df_path, run_variant="identification"):
     if os.path.exists(results_df_path):
         # restore checkpoint and start from there
         results_df = pd.read_csv(results_df_path)
     else:
         results_df = dataset.data_df.copy()
-        results_df["identification_complete"] = False
+        results_df[f"{run_variant}_complete"] = False
     return results_df
 
 
 def handle_openai(dataset, vlm, results_df_path, parameters, variant="identification", previous_check=None):
     image_texts = {f"{variant}": []}
-    results_df = get_starting_df(dataset, results_df_path)
+    results_df = get_starting_df(dataset, results_df_path, run_variant=variant)
     if results_df[f"{variant}_complete"].any() and not results_df[f"{variant}_complete"].all():
         log_error(parameters["logger"], f"Found partial {variant} completes in {results_df_path}. This is a bug and shouldn't be happening.")
     if results_df[f"{variant}_complete"].all():
