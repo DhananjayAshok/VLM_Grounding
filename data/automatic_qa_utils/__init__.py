@@ -49,7 +49,7 @@ def handle_question_validation(parameters, dataset_name, strong_llm):
         with open(qa_validation_path, "w") as f:
             json.dump(qas, f)
         parameters["logger"].info(f"Validated questions for {dataset_name} and saved to {qa_validation_path}")
-    log_status_count(qas, parameters["logger"])
+    log_status_count(qas, parameters)
 
 
 
@@ -71,7 +71,7 @@ def handle_question_deduplication(parameters, dataset_name, weak_llm):
         with open(deduped_qas_path, "w") as f:
             json.dump(qas, f)
         parameters["logger"].info(f"Deduplicated questions for {dataset_name} and saved to {deduped_qas_path}")
-    log_status_count(qas, parameters["logger"])
+    log_status_count(qas, parameters)
 
 def handle_mcq_question_generation(parameters, dataset_name, weak_llm):
     qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_deduplicated.json")

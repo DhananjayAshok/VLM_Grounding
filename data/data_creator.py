@@ -237,12 +237,6 @@ class DataCreator():
         # {"class_name": [{"question": question1, "options": None or option_list, "answer": answer1, "status": status, "source": source}, ...]}
         # we want to select only ones where the status is approved
         self.qas = {}
-        for qa in qas:
-            if qa["status"] != "approved":
-                continue
-            if str(qa["entity_name"]) not in self.validated_classes:
-                continue
-
         for class_name, qa_list in qas.items():
             if class_name not in self.validated_classes:
                 continue
