@@ -115,7 +115,12 @@ def log_status_count(qas, parameters=None):
         parameters = load_parameters()
     status_count = {}
     for qa in qas:
-        status_count[qa["status"]] = status_count.get(qa["status"], 0) + 1
+        if isinstance(qa, list):
+            for q in qa:
+                status_count[q["status"]] = status_count.get(q["status"], 0) + 1
+        else:
+            for q in qas[qa]:
+                status_count[q["status"]] = status_count.get(q["status"], 0) + 1
     parameters["logger"].info(f"QA status counts: \n\t{status_count}")
     n_qas = len(qas)
     for status in status_count:
