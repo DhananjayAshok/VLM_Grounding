@@ -37,7 +37,7 @@ def sequential_compute_metric(metric_fn, candidates, references):
     scores = []
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        for candidate, reference in tqdm(zip(candidates, references), desc="Computing metric", total=len(candidates)):
+        for candidate, reference in zip(candidates, references):
             if candidate is None or reference is None or pd.isna(candidate) or pd.isna(reference):
                 scores.append(None)
             else:
