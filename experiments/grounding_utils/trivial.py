@@ -47,7 +47,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
     for trivial_kind in ["black", "white", "noise"]:
         image_texts[f"trivial_{trivial_kind}_full_information"] = []
         image_texts[f"trivial_{trivial_kind}_image_reference"] = []
-    results_df = get_starting_df(dataset, results_df_path)
+    results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
     if results_df[f"{variant}_complete"].all():
         parameters["logger"].warning(f"Trivial experiment script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
         return
