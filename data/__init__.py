@@ -43,4 +43,9 @@ def get_dataset(dataset_name: str, parameters=None):
     """
     if parameters is None:
         parameters = load_parameters()
-    return DataHolder(dataset_name, parameters=parameters)
+    if "mcq" in dataset_name:
+        dataset_name, mcq_str = dataset_name.split("_")
+        mcq = True
+    else:
+        mcq = False
+    return DataHolder(dataset_name, parameters=parameters, mcq=mcq)
