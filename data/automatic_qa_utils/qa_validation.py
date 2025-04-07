@@ -88,10 +88,20 @@ def verify_qa(qas, llm, mcq=False, random_seed=42):
     return 
 
 
+def reorganize_qas(qas):
+    new_qas = {}
+    for qa in qas:
+        if qa["entity_name"] not in new_qas:
+            new_qas[qa["entity_name"]] = [qa]
+        else:
+            new_qas[qa["entity_name"]].append(qa)
+    return new_qas
+
 def deduplicate_qas(qas, llm):
     deduplicate_qas_inclusion(qas)
     deduplicate_qas_llm(qas, llm)
-    return qas
+    reorganized_qas = reorganize_qas(qas)
+    return reorganized_qas
 
 
 def validate_qas(qas, llm, mcq=False, random_seed=42):

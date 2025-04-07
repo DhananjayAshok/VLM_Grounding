@@ -38,14 +38,17 @@ def generate_mcqas(qas, llm, parameters=None):
     if parameters is None:
         parameters = load_parameters()
     # Generate MCQAs from the QAs
-    mcqas = []
-    for qa in tqdm(qas, desc="Generating MCQAs"):
-        if "accepted" not in qa["status"]:
-            continue
-        text = qa["text"]
-        question = qa["question"]
-        answer = qa["answer"]
-        options = [answer]
-        other_options = llm.perform_question_extraction_mcq(text, question, answer)        
-        qa["options"] = options + other_options
+    mcqas = {}
+    for class_name in tqdm(qas.keys(), desc="Generating MCQAs"):
+        mcqas[class_name] = []
+        for qa in qas[class_name]:
+            if "accepted" not in qa["status"]:
+                continue
+            text = qa["text"]
+            question = qa["question"]
+            answer = qa["answer"]
+            options = [answer]
+            other_options = llm.perform_question_extraction_mcq(text, question, answer)        
+            qa["options"] = options + other_options
+            mcqas[class_name].append(qa)
     return mcqas

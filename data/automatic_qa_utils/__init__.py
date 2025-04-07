@@ -122,7 +122,7 @@ def validate_questions(parameters, dataset_name, strong_llm):
 @click.pass_obj
 def deduplicate_questions(parameters, dataset_name, weak_llm):
     """
-    Deduplicate validated questions for dataset.
+    Deduplicate and reorganize validated questions for dataset.
     """
     handle_question_deduplication(parameters, dataset_name, weak_llm)
 

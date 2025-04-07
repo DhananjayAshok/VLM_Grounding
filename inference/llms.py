@@ -156,9 +156,10 @@ class LMInference:
         elif self.role in ["question_extraction"]:
             return self.parse_question_extraction(output)
         elif self.role in ["question_answering_mcq"]:
+            print("Shouldn't be getting here")
             pass
         elif self.role in ["question_extraction_mcq"]:
-            pass
+            return self.parse_question_extraction_mcq(output)
         else:
             raise ValueError(f"Role {self.role} not recognized")
 
