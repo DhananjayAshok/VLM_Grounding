@@ -54,16 +54,25 @@ Continuing the CIFAR100 example, it is added to the `data/data_holder.py` file l
 # data/data_holder.py
 from  data.cifar100.setup_cifar  import  CIFAR100Creator
 
-def  get_data_creator(dataset_name, parameters=None, mcq=False):
-	"""
-	Returns the data creator object for the given dataset name
-	"""
-	if  dataset_name  ==  "mnist":
-	    return  MNISTCreator(parameters=parameters, mcq=mcq)
-	elif  dataset_name  ==  "cifar100":
-		return  CIFAR100Creator(parameters=parameters, mcq=mcq)
-	else:
-		raise  ValueError(f"Unknown dataset name: {dataset_name}")
+def get_data_creator(dataset_name, parameters=None):
+    """
+    Returns the data creator object for the given dataset name
+    """
+    if "mcq" in dataset_name:
+        dataset_name, mcq_str = dataset_name.split("_")
+        mcq = True
+    else:
+        mcq = False
+    if dataset_name == "mnist":
+        return MNISTCreator(parameters=parameters, mcq=mcq)
+    elif dataset_name == "cifar100":
+        return CIFAR100Creator(parameters=parameters, mcq=mcq)
+    elif dataset_name == "food101":
+        pass
+    elif dataset_name == "landmarks":
+        pass
+    else:
+        raise ValueError(f"Unknown dataset name: {dataset_name}")
 
 # ... rest of the file ...
 ```

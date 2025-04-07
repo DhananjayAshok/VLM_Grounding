@@ -12,10 +12,15 @@ def get_data_creator(dataset_name, parameters=None):
     """
     Returns the data creator object for the given dataset name
     """
+    if "mcq" in dataset_name:
+        dataset_name, mcq_str = dataset_name.split("_")
+        mcq = True
+    else:
+        mcq = False
     if dataset_name == "mnist":
-        return MNISTCreator(parameters=parameters)
+        return MNISTCreator(parameters=parameters, mcq=mcq)
     elif dataset_name == "cifar100":
-        return CIFAR100Creator(parameters=parameters)
+        return CIFAR100Creator(parameters=parameters, mcq=mcq)
     elif dataset_name == "food101":
         pass
     elif dataset_name == "landmarks":
@@ -25,15 +30,16 @@ def get_data_creator(dataset_name, parameters=None):
 
 
 class DataHolder:
-    def __init__(self, dataset_name: str, parameters=None):
+    def __init__(self, dataset_name: str, parameters=None, mcq=False):
         self.dataset_name = dataset_name
         if parameters is None:
             self.parameters = load_parameters()
         else:
             self.parameters = parameters
-        data_df_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "data.csv")
+        data_df_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name + "_mcq" if mcq else dataset_name, "data.csv")
         self.data_df = pd.read_csv(data_df_path)
-        self.data_creator = get_data_creator(dataset_name, parameters)
+        self.data_creator = get_data_creator(dataset_name, parameters, mcq=mcq)
+        self.mcq = mcq
 
     def __len__(self):
         return len(self.data_df)
@@ -62,7 +68,7 @@ class DataHolder:
         return data
     
     def __str__(self):
-        return self.dataset_name
+        return self.dataset_name + "_mcq" if self.mcq else self.dataset_name
     
     def __repr__(self):
         return str(self)

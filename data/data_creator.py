@@ -287,7 +287,7 @@ class DataCreator():
         self.check_class_validation()
         parameters = load_parameters()
         storage_dir = parameters["storage_dir"]
-        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
+        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name+"_mcq" if self.mcq else self.dataset_name)
         if not os.path.exists(dataset_path):
             os.makedirs(dataset_path)
         image_path = os.path.join(dataset_path, "images")
