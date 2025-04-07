@@ -29,7 +29,7 @@ def setup_data(parameters, dataset_names, target_datapoints, skip_mcq):
         creator = get_data_creator(dataset_name, parameters=parameters)
         creator.create_validated_data(target_datapoints=target_datapoints)
         if not skip_mcq and dataset_name not in ["mnist"]: # some datasets are not supported for MCQ
-            creator = get_data_creator(dataset_name, parameters=parameters, mcq=True)
+            creator = get_data_creator(dataset_name+"_mcq", parameters=parameters)
             creator.create_validated_data(target_datapoints=target_datapoints)
 
 
