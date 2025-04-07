@@ -240,7 +240,7 @@ class DataCreator():
         for class_name, qa_list in qas.items():
             if class_name not in self.validated_classes:
                 continue
-            self.qas[class_name] = [qa for qa in qa_list if qa["status"] == "approved"]
+            self.qas[class_name] = [qa for qa in qa_list if qa["status"] == "accepted"]
         return self.qas
 
 
