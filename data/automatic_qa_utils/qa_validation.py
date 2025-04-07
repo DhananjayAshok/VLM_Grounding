@@ -116,10 +116,9 @@ def log_status_count(qas, parameters=None):
     status_count = {}
     n_qas = 0
     for qa in qas:
-        if isinstance(qa, list):
-            for q in qa:
-                status_count[q["status"]] = status_count.get(q["status"], 0) + 1
-                n_qas += 1
+        if isinstance(qa, dict):
+            status_count[qa["status"]] = status_count.get(qa["status"], 0) + 1
+            n_qas += 1
         else:
             for q in qas[qa]:
                 status_count[q["status"]] = status_count.get(q["status"], 0) + 1

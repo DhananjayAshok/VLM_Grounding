@@ -48,7 +48,7 @@ def create_mnist_qas(n_questions_per_class=10, parameters=None):
                 }
             qas.append(d)
             dataset_path = os.path.join(storage_dir, "processed_datasets", "mnist")
-            qa_path = os.path.join(dataset_path, "qa_validated.json")
+            qa_path = os.path.join(dataset_path, "qa_deduplicated.json")
         class_qas[str(class_name)] = qas
     if not os.path.exists(qa_path):
         os.makedirs(os.path.dirname(qa_path), exist_ok=True)
