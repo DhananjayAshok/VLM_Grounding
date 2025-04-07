@@ -37,7 +37,7 @@ class LMInference:
         check_strings = []
         if self.role in ["identification_evaluation", "correctness_evaluation"]:
             check_strings = ["Candidate: ", "Reference: "]
-        elif self.role in ["question_extraction", "question_extraction_mcq"]:
+        elif self.role in ["question_extraction"]:
             check_strings = ["Text:", "Entity:"]
         elif self.role in ["uniqueness_validation"]:
             check_strings = ["Text:", "Question:"]
@@ -45,6 +45,8 @@ class LMInference:
             check_strings = ["Question:", "Answer:"]      
         elif self.role in ["question_answering", "question_answering_mcq"]:
             check_strings = ["Question:"]  
+        elif self.role in ["question_extraction_mcq"]:
+            check_strings = ["Text:", "Question:", "Correct Answer:"]
         for check_string in check_strings:
             if check_string not in text:
                 assert f"{check_string} not found in text {text}. This is needed for the role {self.role}"
@@ -70,12 +72,13 @@ class LMInference:
         text = f"Entity: {entity}\nText: {text}\nRationale: "
         return self.parse(self(text))
 
-    def perform_question_extraction_mcq(self, entity, text):
-        assert entity is not None
+    def perform_question_extraction_mcq(self, text, question, answer):
         assert text is not None
+        assert question is not None
+        assert answer is not None
         self.set_role("question_extraction_mcq")
-        text = f"Entity: {entity}\nText: {text}\n"
-        return self.parse(self(text))
+        in_text = f"Text: {text}\nQuestion: {question}\nCorrect Answer: {answer}\n" 
+        return self.parse(self(in_text))
 
     def perform_uniqueness_validation(self, question, text):
         assert question is not None
@@ -122,24 +125,18 @@ class LMInference:
     def parse_question_extraction_mcq(self, output):
         pieces = output.split("\n")
         # the first line should have Question in it, the second should have Correct Option in it, the rest should have Options in them
-        if "Question:" not in pieces[0]:
-            return []
-        if "Correct Option:" not in pieces[1]:
-            return []
         n_other_options = 0
-        for i in range(2, len(pieces)):
-            if "Option:" in pieces[i]:
+        for i in range(len(pieces)):
+            if "Option" in pieces[i]:
                 n_other_options += 1
         if n_other_options <= 2:
             return []
-        question = pieces[0].split("Question:")[-1].strip()
-        correct_option = pieces[1].split("Correct Option:")[-1].strip()
         options = []
         for i in range(1, len(pieces)):
-            if "Option:" in pieces[i]:
-                option = pieces[i].split("Option:")[-1].strip()
+            if "Option" in pieces[i]:
+                option = pieces[i].split(":")[-1].strip()
                 options.append(option)
-        return {"question": question, "answer": correct_option, "options": options}
+        return options
         
     def parse(self, output):
         if self.role is None:
