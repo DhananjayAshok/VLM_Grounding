@@ -114,15 +114,17 @@ def log_status_count(qas, parameters=None):
     if parameters is None:
         parameters = load_parameters()
     status_count = {}
+    n_qas = 0
     for qa in qas:
         if isinstance(qa, list):
             for q in qa:
                 status_count[q["status"]] = status_count.get(q["status"], 0) + 1
+                n_qas += 1
         else:
             for q in qas[qa]:
                 status_count[q["status"]] = status_count.get(q["status"], 0) + 1
+                n_qas += 1
     parameters["logger"].info(f"QA status counts: \n\t{status_count}")
-    n_qas = len(qas)
     for status in status_count:
         status_count[status] = 100*(status_count[status] / n_qas)
     parameters["logger"].info(f"QA status counts (normalized): \n\t{status_count}")
