@@ -30,7 +30,7 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
 
 def handle_openai(dataset, vlm, results_df_path, parameters, variant="identification", previous_check=None):
     image_texts = {f"{variant}": []}
-    results_df = get_starting_df(dataset, results_df_path, run_variant=variant)
+    results_df = get_starting_df(dataset, vlm, results_df_path, parameters, run_variant=variant)
     if results_df[f"{variant}_complete"].any() and not results_df[f"{variant}_complete"].all():
         log_error(parameters["logger"], f"Found partial {variant} completes in {results_df_path}. This is a bug and shouldn't be happening.")
     if results_df[f"{variant}_complete"].all():
