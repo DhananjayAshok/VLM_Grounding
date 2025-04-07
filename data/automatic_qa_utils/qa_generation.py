@@ -20,6 +20,7 @@ def generate_qas(entity_name, llm, parameters=None):
             question["text"] = text
             question["entity_name"] = entity_name
             question["status"] = "generated"
+            question["source"] = "Wikipedia"
             qas.append(question)
 
     return qas
