@@ -33,3 +33,19 @@ def generate_all_qas(entity_list, llm, parameters=None):
             all_qas.extend(qas)
     return all_qas
 
+
+def generate_mcqas(qas, llm, parameters=None):
+    if parameters is None:
+        parameters = load_parameters()
+    # Generate MCQAs from the QAs
+    mcqas = []
+    for qa in tqdm(qas, desc="Generating MCQAs"):
+        if "accepted" not in qa["status"]:
+            continue
+        text = qa["text"]
+        question = qa["question"]
+        answer = qa["answer"]
+        options = [answer]
+        other_options = llm.perform_question_extraction_mcq(text, question, answer)        
+        qa["options"] = options + other_options
+    return mcqas

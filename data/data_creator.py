@@ -180,10 +180,10 @@ class DataCreator():
         parameters = self.parameters
         storage_dir = parameters["storage_dir"]
         dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
-        qa_path = os.path.join(dataset_path, "qa_deduplicated.json")
+        qa_path = os.path.join(dataset_path, "qas_deduplicated.json")
         generated_qa_path = os.path.join(dataset_path, "qas_generated.json")
-        validated_qa_path = os.path.join(dataset_path, "qa_validated.json")
-        mcqa_path = os.path.join(dataset_path, "mcqa_deduplicated.json")
+        validated_qa_path = os.path.join(dataset_path, "qas_validated.json")
+        mcqa_path = os.path.join(dataset_path, "mcqas_deduplicated.json")
         paths = {}
         paths["deduplicated"] = (qa_path)
         paths["generated"] = (generated_qa_path)

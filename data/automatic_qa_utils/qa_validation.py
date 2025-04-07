@@ -99,3 +99,15 @@ def validate_qas(qas, llm, mcq=False, random_seed=42):
     reject_nonunique_answers(qas, llm)
     verify_qa(qas, llm, mcq=mcq, random_seed=random_seed)
     return qas
+
+def log_status_count(qas, parameters=None):
+    if parameters is None:
+        parameters = load_parameters()
+    status_count = {}
+    for qa in qas:
+        status_count[qa["status"]] = status_count.get(qa["status"], 0) + 1
+    parameters["logger"].info(f"QA status counts: \n\t{status_count}")
+    n_qas = len(qas)
+    for status in status_count:
+        status_count[status] = 100*(status_count[status] / n_qas)
+    parameters["logger"].info(f"QA status counts (normalized): \n\t{status_count}")
