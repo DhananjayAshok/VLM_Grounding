@@ -48,10 +48,9 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
         image_texts[f"trivial_{trivial_kind}_full_information"] = []
         image_texts[f"trivial_{trivial_kind}_image_reference"] = []
     results_df = get_starting_df(dataset, results_df_path)
-    if results_df[f"{variant}_complete"].any() and not results_df[f"{variant}_complete"].all():
-        log_error(parameters["logger"], f"Found partial {variant} completes in {results_df_path}. This is a bug and shouldn't be happening.")
     if results_df[f"{variant}_complete"].all():
-        return results_df    
+        parameters["logger"].warning(f"Trivial experiment script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
+        return
     indexes = []
     for idx, row in results_df.iterrows():
         if previous_check is not None:
