@@ -22,10 +22,10 @@ def load_cifar100(raw_data_path):
             
 
 class CIFAR100Creator(DataCreator):
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, mcq=False):
         if parameters is None:
             parameters = load_parameters()
-        super().__init__("cifar100", all_class_names=fine_labels, parameters=parameters)
+        super().__init__("cifar100", all_class_names=fine_labels, parameters=parameters, mcq=mcq)
         self.dset, self.labels = load_cifar100(raw_data_path=parameters["data_dir"]+"/raw/")
     
     def get_random_images(self, class_name, n=10):

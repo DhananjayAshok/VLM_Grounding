@@ -22,10 +22,10 @@ For [example](data/cifar100/setup_cifar.py), CIFAR100 is set up as
 ```python
 # ...
 class  CIFAR100Creator(DataCreator):
-	def  __init__(self, parameters=None):
+	def  __init__(self, parameters=None, mcq=False):
 		if  parameters  is  None:
-		parameters  =  load_parameters()
-		super().__init__("cifar100",  all_class_names=fine_labels,  parameters=parameters)
+		    parameters  =  load_parameters()
+	    super().__init__("cifar100",  all_class_names=fine_labels,  parameters=parameters, mcq=mcq)
 		self.dset,  self.labels  =  load_cifar100(raw_data_path=parameters["data_dir"]+"/raw/")
 		
 	def  get_random_images(self, class_name : str, n=10):
@@ -54,14 +54,14 @@ Continuing the CIFAR100 example, it is added to the `data/data_holder.py` file l
 # data/data_holder.py
 from  data.cifar100.setup_cifar  import  CIFAR100Creator
 
-def  get_data_creator(dataset_name, parameters=None):
+def  get_data_creator(dataset_name, parameters=None, mcq=False):
 	"""
 	Returns the data creator object for the given dataset name
 	"""
 	if  dataset_name  ==  "mnist":
-	    return  MNISTCreator(parameters=parameters)
+	    return  MNISTCreator(parameters=parameters, mcq=mcq)
 	elif  dataset_name  ==  "cifar100":
-		return  CIFAR100Creator(parameters=parameters)
+		return  CIFAR100Creator(parameters=parameters, mcq=mcq)
 	else:
 		raise  ValueError(f"Unknown dataset name: {dataset_name}")
 

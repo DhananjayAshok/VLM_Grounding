@@ -58,12 +58,14 @@ def create_mnist_qas(n_questions_per_class=10, parameters=None):
             
 
 class MNISTCreator(DataCreator):
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, mcq=False):
         if parameters is None:
             parameters = load_parameters()
-        super().__init__("mnist", all_class_names=[str(i) for i in range(10)], parameters=parameters)
+        super().__init__("mnist", all_class_names=[str(i) for i in range(10)], parameters=parameters, mcq=mcq)
         self.dset, self.labels = load_mnist(raw_data_path=parameters["data_dir"]+"/raw/")
         self.object_str = "digit"
+        if self.mcq:
+            log_error(self.parameters["logger"], "MNIST does not support MCQ yet, please set mcq=False")
 
 
     def get_question_prefix(self, class_name: str = None):

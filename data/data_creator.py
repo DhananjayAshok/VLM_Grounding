@@ -20,7 +20,7 @@ def num_to_alph(num):
 
 
 class DataCreator():
-    def __init__(self, dataset_name: str, all_class_names=None, parameters=None):
+    def __init__(self, dataset_name: str, all_class_names=None, parameters=None, mcq=False):
         self.all_class_names = all_class_names
         self.dataset_name = dataset_name.lower()
         self.qas = None
@@ -30,6 +30,7 @@ class DataCreator():
         else:
             self.parameters = parameters
         self.object_str = "object"
+        self.mcq = mcq
         
 
     def get_random_images(self, class_name, n=10):
@@ -71,7 +72,31 @@ class DataCreator():
         Return:
         str: The prefix for the dataset
         """
-        prefix = "Answer the questions with a short response. Do not state the name of the object in the image. \nWhat are swords made of?\nAnswer: steel [STOP]\n What is the capital of France?\nAnswer: Paris [STOP]\n"
+        if not self.mcq:
+            prefix = "Answer the questions with a short response. Do not state the name of the object in the image. \nWhat are swords made of?\nAnswer: steel [STOP]\n What is the capital of France?\nAnswer: Paris [STOP]\n"
+        else:
+            prefix = "Answer the questions with a short response. Do not state the name of the object in the image"
+            answer_inds = []
+            prompt_dets = []
+            q = "What are swords made of?"
+            correct_answer = "Steel"
+            options_answers = ["Clay", "Plastic", "Paper", correct_answer]
+            prompt_dets.append((q, correct_answer, options_answers))
+
+            q = "What is the capital of France?"
+            correct_answer = "Paris"
+            options_answers = ["London", "Berlin", correct_answer, "Rome"]
+            prompt_dets.append((q, correct_answer, options_answers))
+
+            for q, correct_answer, options_answers in prompt_dets:
+                while options_answers.index(correct_answer) in answer_inds:
+                    np.random.shuffle(options_answers)
+                options = [f"{num_to_alph(i)}: {option}" for i, option in enumerate(options_answers)]
+                options_str = "\n".join(options)
+                answer_ind = options_answers.index(correct_answer)
+                answer = f"{num_to_alph(answer_ind)}: {correct_answer}"
+                answer_inds.append(answer_ind)
+                prefix = prefix + f"\nQuestion: {q}\n{options_str}\nAnswer: {answer} [STOP]\n"
         return prefix
 
     
@@ -81,7 +106,10 @@ class DataCreator():
         This is the prefix for the explicit stating answer type i.e. 
         """
         prefix = "First identify the object in the image, and then answer the question. "
-        return prefix
+        if not self.mcq:
+            return prefix
+        else:
+            log_error(self.parameters["logger"], "Explicit stating question prefix is not implemented for MCQ datasets. Please implement this function to return a dataset specific prefix.")
 
 
     def get_identification_prefix(self, class_name):
@@ -145,6 +173,44 @@ class DataCreator():
             self.validated_classes = pickle.load(f)
         return self.validated_classes
 
+    def get_qa_path(self):
+        """
+        Returns the qa path to the question answer pairs, errors out if dne
+        """
+        parameters = self.parameters
+        storage_dir = parameters["storage_dir"]
+        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
+        qa_path = os.path.join(dataset_path, "qa_deduplicated.json")
+        generated_qa_path = os.path.join(dataset_path, "qas_generated.json")
+        validated_qa_path = os.path.join(dataset_path, "qa_validated.json")
+        mcqa_path = os.path.join(dataset_path, "mcqa_deduplicated.json")
+        paths = {}
+        paths["deduplicated"] = (qa_path)
+        paths["generated"] = (generated_qa_path)
+        paths["validated"] = (validated_qa_path)
+        paths["mcqa"] = (mcqa_path)
+        file_exists = False
+        if self.mcq:
+            file_exists = os.path.exists(mcqa_path)
+        else:
+            file_exists = os.path.exists(qa_path)
+        if not file_exists:
+            if self.mcq and os.path.exists(qa_path):
+                log_error(parameters["logger"], f"QA pairs for {self.dataset_name} MCQ variant do not exist, but deduplicated data does exist at {qa_path}. Run the generate_mcq_questions command first.")
+            else:
+                if os.path.exists(validated_qa_path):
+                    log_error(parameters["logger"], f"QA pairs for {self.dataset_name} do not exist, but validated data does exist at {validated_qa_path}. Run the generate_questions command first.")
+                elif os.path.exists(generated_qa_path):
+                    log_error(parameters["logger"], f"QA pairs for {self.dataset_name} do not exist, but generated data does exist at {generated_qa_path}. Run the validate_questions command first.")
+                else:
+                    log_error(parameters["logger"], f"QA pairs for {self.dataset_name} do not exist, validated data and generated_data does not exist either. Run generate_questions to generate them and then validate_questions to validate them and finally deduplicate_questions to deduplicate them.")
+        
+        if self.mcq:
+            return mcqa_path
+        else:
+            return qa_path
+    
+
 
     def load_qas(self):
         """
@@ -164,21 +230,7 @@ class DataCreator():
         question is either a short form or MCQ question with the options 
         """
         self.check_class_validation()
-            
-        parameters = load_parameters()
-        storage_dir = parameters["storage_dir"]
-        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
-        qa_path = os.path.join(dataset_path, "qa_deduplicated.json")
-        generated_qa_path = os.path.join(dataset_path, "qas_generated.json")
-        validated_qa_path = os.path.join(dataset_path, "qa_validated.json")
-        if not os.path.exists(qa_path):
-            if os.path.exists(validated_qa_path):
-                log_error(parameters["logger"], f"Deduplicated QA pairs for {self.dataset_name} do not exist but validated data exists at {validated_qa_path}. Run the deduplicate_questions commands first.")
-            elif os.path.exists(generated_qa_path):
-                log_error(parameters["logger"], f"Deduplicated QA pairs for {self.dataset_name} do not exist but generated qa data exists at {generated_qa_path}. Run the validate_questions and then the deduplicate_questions commands first.")
-            else:
-                log_error(parameters["logger"], f"QA pairs for {self.dataset_name} do not exist, validated data and generated_data does not exist either. Run generate_questions to generate them and then validate_questions to validate them and finally deduplicate_questions to deduplicate them.")
-
+        qa_path = self.get_qa_path()
         with open(qa_path, "r") as f:
             qas = json.load(f)
         # qas is a dictionary of the form 
