@@ -1,7 +1,7 @@
 import click
 from utils.log_handling import log_error
 from inference.llms import get_llm
-from data.automatic_qa_utils.qa_validation import deduplicate_qas, validate_qas, accept_qas
+from data.automatic_qa_utils.qa_validation import deduplicate_qas, validate_qas
 from data.automatic_qa_utils.qa_generation import generate_all_qas
 from data import get_data_creator
 import os
@@ -60,7 +60,6 @@ def handle_question_deduplication(parameters, dataset_name, weak_llm):
         return qas
     qas = json.load(open(qas_path, "r"))
     deduplicate_qas(qas, llm)
-    accept_qas(qas)
     with open(deduped_qas_path, "w") as f:
         json.dump(qas, f)
 

@@ -97,11 +97,3 @@ def validate_qas(qas, llm, mcq=False, random_seed=42):
     reject_nonunique_answers(qas, llm)
     verify_qa(qas, llm, mcq=mcq, random_seed=random_seed)
     return qas
-
-
-def accept_qas(qas):
-    for qa in qas:
-        if "rejected" in qa["status"]:
-            continue
-        qa["status"] = "accepted"
-    return qas
