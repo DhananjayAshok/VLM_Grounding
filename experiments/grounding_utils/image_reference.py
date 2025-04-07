@@ -1,29 +1,9 @@
 import os
+from experiments.grounding_utils.common import HiddenStateTracking, VocabProjectionTracking, save, update_row, handle_openai, get_starting_df
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import pandas as pd
 from tqdm import tqdm
-from experiments.grounding_utils.identification import handle_openai, HiddenStateTracking, VocabProjectionTracking, save, update_row
-
-
-def get_starting_df(dataset, vlm, results_df_path, parameters):
-    if os.path.exists(results_df_path):
-        # restore checkpoint and start from there
-        results_df = pd.read_csv(results_df_path)
-    else:
-        # look for the identification results for the dataset, vlm
-        results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/full_information_results_evaluated.csv"
-        un_evaluated_results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/full_information_results.csv"
-        if os.path.exists(results_path):
-            results_df = pd.read_csv(results_path)
-            results_df["image_reference_complete"] = True
-            pass_row_idx = results_df[results_df["full_information_pass"] == True].index
-            results_df.loc[pass_row_idx, "image_reference_complete"] = False
-        elif os.path.exists(un_evaluated_results_path):
-            log_error(parameters["logger"], f"Un-evaluated full information results found for {dataset} and {vlm}. Please evaluate them first.")
-        else:
-            log_error(parameters["logger"], f"No full information results found for {dataset} and {vlm}. Please run the full information script first.")
-    return results_df
 
 
 def do_image_reference(dataset, vlm, variant="default",  parameters=None, checkpoint_every=0.1): # must consider OpenAI as well
@@ -34,7 +14,7 @@ def do_image_reference(dataset, vlm, variant="default",  parameters=None, checkp
     if "gpt" in str(vlm): # handle openAI differently
         handle_openai(dataset, vlm, results_df_path, parameters, variant="image_reference", previous_check="full_information_pass")
     else:
-        results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
+        results_df = get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="image_reference")
 
         if results_df["image_reference_complete"].all():
             parameters["logger"].warning(f"Image reference script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")

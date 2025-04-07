@@ -2,7 +2,7 @@ import click
 import os
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
-from experiments.grounding_utils.identification import VocabProjectionTracking
+from experiments.grounding_utils.common import VocabProjectionTracking
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np

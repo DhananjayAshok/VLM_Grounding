@@ -1,30 +1,11 @@
 import os
+from experiments.grounding_utils.common import HiddenStateTracking, VocabProjectionTracking, save
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import pandas as pd
 from tqdm import tqdm
-from experiments.grounding_utils.identification import handle_openai, HiddenStateTracking, VocabProjectionTracking, save, update_row
+from experiments.grounding_utils.common import update_row, handle_openai, get_starting_df
 
-
-def get_starting_df(dataset, vlm, results_df_path, parameters):
-    if os.path.exists(results_df_path):
-        # restore checkpoint and start from there
-        results_df = pd.read_csv(results_df_path)
-    else:
-        # look for the identification results for the dataset, vlm
-        results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/identification_results_evaluated.csv"
-        un_evaluated_results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/identification_results.csv"
-        if os.path.exists(results_path):
-            results_df = pd.read_csv(results_path)
-            results_df["full_information_complete"] = True
-            # if identification pass then say full_information_complete is True
-            pass_row_idx = results_df[results_df["identification_pass"] == True].index
-            results_df.loc[pass_row_idx, "full_information_complete"] = False
-        elif os.path.exists(un_evaluated_results_path):
-            log_error(parameters["logger"], f"Un-evaluated identification results found for {dataset} and {vlm}. Please evaluate them first.")
-        else:
-            log_error(parameters["logger"], f"No identification results found for {dataset} and {vlm}. Please run the identification script first.")
-    return results_df
 
 def do_full_information(dataset, vlm, variant="default",  parameters=None, checkpoint_every=0.1): # must consider OpenAI as well
     if parameters is None:
@@ -34,7 +15,7 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
     if "gpt" in str(vlm): # handle openAI differently
         handle_openai(dataset, vlm, results_df_path, parameters, variant="full_information", previous_check="identification_pass")
     else:
-        results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
+        results_df = get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="full_information")
         if results_df["full_information_complete"].all():
             parameters["logger"].warning(f"Full information script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
             return results_df_path

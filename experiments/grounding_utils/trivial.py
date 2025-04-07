@@ -1,11 +1,12 @@
 import os
+from experiments.grounding_utils.common import HiddenStateTracking, VocabProjectionTracking
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import pandas as pd
 from tqdm import tqdm
 from PIL import Image
 import random
-from experiments.grounding_utils.identification import HiddenStateTracking, VocabProjectionTracking, update_row
+from experiments.grounding_utils.common import update_row
 
 def create_black_image(width, height):
     return Image.new("RGB", (width, height), "black")

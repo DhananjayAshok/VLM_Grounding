@@ -1,5 +1,6 @@
 import click
 import pandas as pd
+from experiments.grounding_utils.common import HiddenStateTracking
 from inference.vlms import LlaVaInference
 from data import get_dataset
 import os
@@ -11,7 +12,7 @@ from experiments.hidden_modeling_utils.metrics import compute_metrics, compute_c
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 from utils.hash_handling import write_meta, hash_meta_dict
-from experiments.grounding_utils.identification import HiddenStateTracking, VocabProjectionTracking
+from experiments.grounding_utils.common import VocabProjectionTracking
 
 def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", metric="two_way_inclusion"):
     hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
