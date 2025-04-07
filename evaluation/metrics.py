@@ -1,6 +1,6 @@
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import warnings
-import tqdm
+from tqdm import tqdm
 import pandas as pd
 import os
 from utils.parameter_handling import load_parameters
@@ -37,7 +37,7 @@ def sequential_compute_metric(metric_fn, candidates, references):
     scores = []
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        for candidate, reference in tqdm.tqdm(zip(candidates, references)):
+        for candidate, reference in tqdm(zip(candidates, references), desc="Computing metric", total=len(candidates)):
             if candidate is None or reference is None or pd.isna(candidate) or pd.isna(reference):
                 scores.append(None)
             else:
