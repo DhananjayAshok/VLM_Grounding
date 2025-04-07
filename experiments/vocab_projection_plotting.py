@@ -55,5 +55,7 @@ def plot_by_metric(dict_array, results_df, metric, parameters=None):
     trues, falses = separate_by_metric(dict_array, results_df, metric, parameters)
     # unsure but I think trues shape is (n_datapoints, n_layers-1) we want a line plot of n_layers-1
     # TODO: Figure this one out when you can. 
+    # Do KL of layer i, of the two different kinds of full language and vision language impoverished for linking failure and success. 
+    # This is different from what you were doing of just doing i vs i+1, do that also. 
 
     

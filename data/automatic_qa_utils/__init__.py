@@ -108,6 +108,18 @@ def full_qa_pipeline(parameters, dataset_name, llm):
     handle_question_generation(parameters, dataset_name, llm)
     handle_question_validation(parameters, dataset_name, llm)
     handle_question_deduplication(parameters, dataset_name, llm)
+    qas_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "qas_deduplicated.json")
+    qas = json.load(open(qas_path, "r"))
+    status_count = {}
+    for qa in qas:
+        status_count[qa["status"]] = status_count.get(qa["status"], 0) + 1
+    parameters["logger"].info(f"QA pipeline completed for {dataset_name}.")
+    parameters["logger"].info(f"QA status counts: \n\t{status_count}")
+    n_qas = len(qas)
+    for status in status_count:
+        status_count[status] = 100*(status_count[status] / n_qas)
+    parameters["logger"].info(f"QA status counts (normalized): \n\t{status_count}")
+
 
 
 

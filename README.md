@@ -6,3 +6,7 @@ This repository is a useful starting point for a project in Python. It has the f
 3. Meta dictionary hashing to save parameter values to a unique string
 
 To get started, use this template to create a new repo
+
+
+#TODO:
+Do selective prediction on OKVQA. What we are identifying is whether linking has failed. But training on the synthetic set then the probe can notify you to failures. ZeroShot on an outside task. 
