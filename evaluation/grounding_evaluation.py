@@ -42,7 +42,7 @@ def log_final_evaluation(df, parameters):
     for trivial in trivials:
         for variant in response_cols:
             candidate_cols.append(f"trivial_{trivial}_{variant}")
-    for log_metric in ["two_way_inclusion", "bleu"]:
+    for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
