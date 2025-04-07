@@ -2,6 +2,7 @@
 import os
 import pandas as pd
 from utils.log_handling import log_error
+import pickle
 
 
 def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="identification"):
@@ -9,7 +10,7 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
         results_df = pd.read_csv(results_df_path)
     else:
         prev_runs = {"identification": None, "full_information": "identification", 
-                     "image_reference": "full_information", "trivial": "full_information"}
+                     "image_reference": "full_information"}
         if run_variant == "identification":
             results_df = dataset.data_df.copy()
             results_df[f"{run_variant}_complete"] = False
@@ -31,10 +32,9 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
 def handle_openai(dataset, vlm, results_df_path, parameters, variant="identification", previous_check=None):
     image_texts = {f"{variant}": []}
     results_df = get_starting_df(dataset, vlm, results_df_path, parameters, run_variant=variant)
-    if results_df[f"{variant}_complete"].any() and not results_df[f"{variant}_complete"].all():
-        log_error(parameters["logger"], f"Found partial {variant} completes in {results_df_path}. This is a bug and shouldn't be happening.")
     if results_df[f"{variant}_complete"].all():
-        return results_df    
+        parameters["logger"].warning(f"{variant} script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
+        return 
     indexes = []
     for idx, row in results_df.iterrows():
         if previous_check is not None:
@@ -61,6 +61,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
             results_df.loc[idx, f"{key}_response"] = idx_row["response"].values[0]
     results_df.loc[f"{variant}_complete"] = True
     results_df.to_csv(results_df_path, index=False)
+    return
 
 
 class HiddenStateTracking:
