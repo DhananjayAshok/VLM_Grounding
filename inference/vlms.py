@@ -80,7 +80,7 @@ class HuggingFaceInference:
             for i in range(1):
                 for j in range(n_layers):
                     # ret_array[i, j] 
-                    ret_array[j] = compute_vocab_proj(output["hidden_states"][i][j][0, -1], unembedding_layer, device)
+                    ret_array[j] = compute_vocab_proj(output["hidden_states"][i][j][0, -1], unembedding_layer, device).detach().cpu().numpy()
             # compute the KL Divergence and the probabilities here itself. 
             div_array = forward_kl(ret_array)
             # compute the softmax
