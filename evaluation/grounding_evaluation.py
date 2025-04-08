@@ -2,13 +2,16 @@ from utils.log_handling import log_error
 from evaluation.metrics import df_compute_metric_str
 
 
-def do_final_evaluation(df, parameters, verbose=False):
+def do_final_evaluation(df, parameters, verbose=False, okayvqa=False):
     reference_column = "answer_str"
-    variants = ["full_information", "image_reference"]
-    for trivial in ["black", "white", "noise"]:
-        variants.append(f"trivial_{trivial}_full_information")
-        variants.append(f"trivial_{trivial}_image_reference")
-    candidate_columns = [f"{variant}_response" for variant in variants]
+    if not okayvqa:
+        variants = ["full_information", "image_reference"]
+        for trivial in ["black", "white", "noise"]:
+            variants.append(f"trivial_{trivial}_full_information")
+            variants.append(f"trivial_{trivial}_image_reference")
+        candidate_columns = [f"{variant}_response" for variant in variants]
+    else:
+        candidate_columns = ["image_reference_response"]
     metrics = ["inclusion", "two_way_inclusion", "exact_match", "bleu"]
     for metric in metrics:
         for candidate_column in candidate_columns:
@@ -31,17 +34,20 @@ def do_final_evaluation(df, parameters, verbose=False):
 
 
 
-def log_final_evaluation(df, parameters):
+def log_final_evaluation(df, parameters, okvqa=False):
     logger = parameters["logger"]
     for column in df.columns:
         if column.endswith("_pass"):
             logger.info(f"{column}: {df[column].sum()}/{len(df)}")
-    response_cols = ["full_information_response", "image_reference_response"]
-    candidate_cols = response_cols.copy()
-    trivials = ["min", "max"]
-    for trivial in trivials:
-        for variant in response_cols:
-            candidate_cols.append(f"trivial_{trivial}_{variant}")
+    if not okvqa:
+        response_cols = ["full_information_response", "image_reference_response"]
+        candidate_cols = response_cols.copy()
+        trivials = ["min", "max"]
+        for trivial in trivials:
+            for variant in response_cols:
+                candidate_cols.append(f"trivial_{trivial}_{variant}")
+    else:
+        candidate_cols = ["image_reference_response"]
     for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"

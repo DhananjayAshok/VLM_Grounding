@@ -89,7 +89,8 @@ def handle_mcq_question_generation(parameters, dataset_name, weak_llm):
     mcqas = generate_mcqas(qas, llm, parameters=parameters)
     with open(mcq_qas_path, "w") as f:
         json.dump(mcqas, f)
-    parameters["logger"].info(f"Generated {len(mcqas)} MCQAs for {dataset_name} and saved to {mcq_qas_path}")
+    parameters["logger"].info(f"Generated MCQAs for {dataset_name} and saved to {mcq_qas_path}")
+    log_status_count(mcqas, parameters)
     return
 
 

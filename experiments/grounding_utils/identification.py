@@ -14,7 +14,7 @@ def do_identification(dataset, vlm, variant="default", parameters=None, checkpoi
     if "gpt" in str(vlm): # handle openAI differently
         handle_openai(dataset, vlm, results_df_path, parameters, variant="identification")
     else:
-        results_df = get_starting_df(dataset, results_df_path)
+        results_df = get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="identification")
         if results_df["identification_complete"].all():
             parameters["logger"].warning(f"Identification script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
             return results_df_path
