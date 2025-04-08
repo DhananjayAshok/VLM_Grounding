@@ -113,14 +113,14 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
         image_reference_hidden_state_trackers = {}
         image_reference_projection_trackers = {}
         for trivial in ["black", "white", "noise"]:
-            if variant == "hidden_state":
+            if "hidden_state" in variant:
                 name = f"trivial_{trivial}_full_information"
                 full_hidden_state_trackers[trivial] = HiddenStateTracking(dataset, vlm, name, parameters)
                 full_hidden_state_trackers[trivial].load_checkpoint()
                 name = f"trivial_{trivial}_image_reference"
                 image_reference_hidden_state_trackers[trivial] = HiddenStateTracking(dataset, vlm, name, parameters)
                 image_reference_hidden_state_trackers[trivial].load_checkpoint()
-            elif variant == "vocab_projection":
+            elif "vocab_projection" in variant:
                 name = f"trivial_{trivial}_full_information"
                 full_projection_trackers[trivial] = VocabProjectionTracking(dataset, vlm, name, parameters)
                 full_projection_trackers[trivial].load_checkpoint()

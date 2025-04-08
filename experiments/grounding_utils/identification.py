@@ -23,10 +23,10 @@ def do_identification(dataset, vlm, variant="default", parameters=None, checkpoi
 
         hidden_state_tracker = None
         projection_tracker = None
-        if variant == "hidden_state":
+        if "hidden_state" in variant:
             hidden_state_tracker = HiddenStateTracking(dataset, vlm, "identification", parameters)
             hidden_state_tracker.load_checkpoint()
-        elif variant == "vocab_projection":
+        elif "vocab_projection" in variant:
             projection_tracker = VocabProjectionTracking(dataset, vlm, "identification", parameters)
             projection_tracker.load_checkpoint()
             
