@@ -16,6 +16,10 @@ vlms=(
 
 for vlm in "${vlms[@]}"; do
   echo "Running experiment for $dataset_name with $vlm"
-  bash scripts/do_experiment.sh $dataset_name $vlm
-  echo "Completed experiment for $dataset_name with $vlm"
+    if [[ $vlm == "llava-v1.6-vicuna-7b-hf" ]]; then
+        echo "Running hidden state tracking and vocabulary projection too"
+        python main.py grounding_experiment --dataset_name $dataset_name --model $vlm --variant hidden_state_vocab_projection
+    else
+        python main.py grounding_experiment --dataset_name $dataset --model $vlm
+    fi
 done
