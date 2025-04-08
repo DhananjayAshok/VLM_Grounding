@@ -27,7 +27,7 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
         if "hidden_state" in variant:
             hidden_state_tracker = HiddenStateTracking(dataset, vlm, "full_information", parameters)
             hidden_state_tracker.load_checkpoint()
-        elif "vocab_projection" in variant:
+        if "vocab_projection" in variant:
             projection_tracker = VocabProjectionTracking(dataset, vlm, "full_information", parameters)
             projection_tracker.load_checkpoint()
             

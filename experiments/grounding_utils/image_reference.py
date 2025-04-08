@@ -27,7 +27,7 @@ def do_image_reference(dataset, vlm, variant="default",  parameters=None, checkp
         if "hidden_state" in variant:
             hidden_state_tracker = HiddenStateTracking(dataset, vlm, "image_reference", parameters)
             hidden_state_tracker.load_checkpoint()
-        elif "vocab_projection" in variant:
+        if "vocab_projection" in variant:
             projection_tracker = VocabProjectionTracking(dataset, vlm, "image_reference", parameters)
             projection_tracker.load_checkpoint()
             
