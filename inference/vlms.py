@@ -87,7 +87,7 @@ class HuggingFaceInference:
             probs = compute_softmax(ret_array)
             first_token_id = output["sequences"][0, input_length].item()
             # get the probs for the first token
-            first_token_probs = probs[0, first_token_id]
+            first_token_probs = probs[:, first_token_id]
             response["kl_divergence"] = div_array
             response["projection_prob"] = first_token_probs
             
