@@ -60,10 +60,14 @@ class HuggingFaceInference:
         output = self.model.generate(**inputs, max_new_tokens=max_new_tokens, pad_token_id=self.model.config.eos_token_id, stop_strings=["[STOP]"], tokenizer=self.processor.tokenizer, output_hidden_states=True, return_dict_in_generate=True, output_scores=True)
         output_tokens = output["sequences"][0, input_length:]
         output_text = self.processor.decode(output_tokens, skip_special_tokens=True)
-        transition_scores = self.model.compute_transition_scores(output.sequences, output.scores, normalize_logits=True)
+        if "blip" in str(self.variant):
+            perplexity = None
+        else:
+            transition_scores = self.model.compute_transition_scores(output.sequences, output.scores, normalize_logits=True)
+            perplexity = transition_scores.mean().item()
         response = {
             "text": output_text,
-            "perplexity": transition_scores.mean().item(),
+            "perplexity": perplexity,
         }
         if self.vocab_projection_mode:
             # output['hidden_states'] is a tuple of tuples of torch tensors with overall shape: n_tokens_generated x n_layers x (1, either input_length or 1) x hidden_dim)
