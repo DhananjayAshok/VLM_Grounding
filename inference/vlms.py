@@ -35,13 +35,13 @@ def compute_vocab_proj(hidden_state, unembedding_layer, device):
     return scores
 
 def compute_softmax(logits):
-    probs = torch.nn.functional.softmax(logits, dim=-1).detach().cpu().numpy()
+    probs = torch.nn.functional.softmax(torch.Tensor(logits), dim=-1).detach().cpu().numpy()
     return probs
 
 
 def kl_divergence(logits_p, logits_q):
-    dist1 = torch.distributions.Categorical(logits=logits_p)
-    dist2 = torch.distributions.Categorical(logits=logits_q)
+    dist1 = torch.distributions.Categorical(logits=torch.Tensor(logits_p))
+    dist2 = torch.distributions.Categorical(logits=torch.Tensor(logits_q))
     kl_div = torch.distributions.kl.kl_divergence(dist1, dist2)
     return kl_div.item()
 
