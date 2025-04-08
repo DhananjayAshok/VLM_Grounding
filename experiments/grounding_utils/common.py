@@ -151,7 +151,7 @@ def update_row(results_df, idx, item_name, response, completed=True, hidden_stat
     results_df.loc[idx, f"{item_name}_response_perplexity"] = response["perplexity"]
     if hidden_state_tracker is not None:
         hidden_state_tracker.add_hidden_state(idx, response["hidden_states"])
-    elif projection_tracker is not None:
+    if projection_tracker is not None:
         projection_tracker.add_projection(idx, response["kl_divergence"], response["projection_prob"])
     if completed:
         results_df.loc[idx, f"{item_name}_complete"] = True

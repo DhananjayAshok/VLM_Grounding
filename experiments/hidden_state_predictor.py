@@ -14,7 +14,7 @@ from utils.log_handling import log_error
 from utils.hash_handling import write_meta, hash_meta_dict
 from experiments.grounding_utils.common import VocabProjectionTracking
 
-def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", metric="two_way_inclusion"):
+def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", metric="two_way_inclusion", token_pos="input"):
     hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
     hidden_tracker.load_checkpoint()
     if hidden_tracker.hidden_states == {}:
@@ -42,9 +42,9 @@ def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", 
         if idx not in hidden_tracker.hidden_states:
             log_error(parameters["logger"], f"Hidden state for index {idx} not found. Please run the model first.")
             continue
-        if layer not in hidden_tracker.hidden_states[idx]:
-            log_error(parameters["logger"], f"Layer {layer} not found in hidden states for {idx}.")
-        X.append(hidden_tracker.hidden_states[idx][layer])
+        if f"{layer}_last_{token_pos}" not in hidden_tracker.hidden_states[idx]:
+            log_error(parameters["logger"], f"Layer {layer} not found in hidden states for {idx} with keys {hidden_tracker.hidden_states[idx].keys()}.")
+        X.append(hidden_tracker.hidden_states[idx][f"{layer}_last_{token_pos}"])
     X = np.array(X)
     y = nonnans[label_col].values
     df = nonnans.reset_index(drop=True)
