@@ -124,7 +124,7 @@ class LlaVaInference(HuggingFaceInference):
                 self.model.config.pad_token_id = self.model.config.eos_token_id
         if self.hidden_state_tracking_mode:
             n_layers = self.model.language_model.config.num_hidden_layers
-            layers_to_track = list(range(1, n_layers-1), 4)
+            layers_to_track = list(range(1, n_layers-1, 3))
             self.layers_to_track = layers_to_track
         
 
