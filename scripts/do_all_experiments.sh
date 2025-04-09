@@ -20,6 +20,6 @@ for vlm in "${vlms[@]}"; do
         echo "Running hidden state tracking and vocabulary projection too"
         python main.py grounding_experiment --dataset_name $dataset_name --model $vlm --variant hidden_state_vocab_projection
     else
-        python main.py grounding_experiment --dataset_name $dataset --model $vlm
+        python main.py grounding_experiment --dataset_name $dataset_name --model $vlm
     fi
 done
