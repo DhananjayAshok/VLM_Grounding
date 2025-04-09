@@ -141,7 +141,7 @@ class VocabProjectionTracking:
 def save(results_df, results_df_path, hidden_state_tracker=None, projection_tracker=None):
     if hidden_state_tracker is not None:
         hidden_state_tracker.save_checkpoint()
-    elif projection_tracker is not None:
+    if projection_tracker is not None:
         projection_tracker.save_checkpoint()
     results_df.to_csv(results_df_path, index=False)
 
