@@ -151,7 +151,7 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
             os.makedirs(savedir)
         np.save(f"{savedir}//train_pred.npy", train_pred)
         np.save(f"{savedir}//test_pred.npy", test_pred)
-        model.save(f"{savedir}//{meta_hash}/")
+        model.save(f"{savedir}/")
         write_meta(f"{prediction_dir}/", meta, parameters["logger"])
     return train_pred, test_pred, test_acc
 
