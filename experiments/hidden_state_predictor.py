@@ -46,7 +46,7 @@ def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", 
             log_error(parameters["logger"], f"Layer {layer} not found in hidden states for {idx} with keys {hidden_tracker.hidden_states[idx].keys()}.")
         X.append(hidden_tracker.hidden_states[idx][f"{layer}_last_{token_pos}"])
     X = np.array(X)
-    y = nonnans[label_col].values
+    y = nonnans[label_col].values.astype(int)
     df = nonnans.reset_index(drop=True)
     return X, y, df
 
