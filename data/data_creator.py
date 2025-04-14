@@ -108,10 +108,7 @@ class DataCreator():
         This is the prefix for the explicit stating answer type i.e. 
         """
         prefix = "First identify the object in the image, and then answer the question. "
-        if not self.mcq:
-            return prefix
-        else:
-            log_error(self.parameters["logger"], "Explicit stating question prefix is not implemented for MCQ datasets. Please implement this function to return a dataset specific prefix.")
+        return prefix
 
 
     def get_identification_prefix(self, class_name):
