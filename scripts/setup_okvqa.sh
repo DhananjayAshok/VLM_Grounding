@@ -1,5 +1,5 @@
 storage_dir=$1
-
+currdir=$(pwd)
 if [ -z "$storage_dir" ]; then
   echo "Usage: $0 <storage_dir>"
   exit 1
@@ -21,4 +21,5 @@ wget http://images.cocodataset.org/zips/val2014.zip
 unzip val2014.zip
 rm *.zip
 
+cd $currdir
 python main.py setup_okvqa
