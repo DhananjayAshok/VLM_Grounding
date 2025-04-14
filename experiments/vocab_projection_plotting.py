@@ -80,19 +80,34 @@ def separate_by_metric(dict_array, results_df, metric_col, parameters=None):
     return np.array(trues), np.array(falses)
 
 def lineplot(trues, falses, title, ylabel):
+    columns = ["Layer Index", ylabel,"Linking Status"]
+    data = []
+    for item in trues:
+        for layer_idx, layer in enumerate(item):
+            data.append([layer_idx, layer, "Success"])
+    for item in falses:
+        for layer_idx, layer in enumerate(item):
+            data.append([layer_idx, layer, "Failure"])
+    data_df = pd.DataFrame(data, columns=columns)
+    data_df["Layer Index"] = data_df["Layer Index"].astype(int)
     layer_idx = None # This is a placeholder, you need to define how to get the layer index
     data_df = None # You basically need to form a dataframe with the data you want to plot
-    sns.lineplot(layer_idx, trues, label="Success", color="blue") 
-    sns.lineplot(layer_idx, falses, label="Failure", color="red")
-    plt.title(title)
-    plt.xlabel("Layer Index")
-    plt.ylabel(ylabel)
+    sns.lineplot(data=data_df, x="Layer Index", y=ylabel, hue="Linking Status", palette=["green", "red"], linewidth=2.5) 
+    plt.title("")
     plt.legend()
     show()
 
 
-def show():
+def show(save_name, parameters=None):
+    if parameters is None:
+        parameters = load_parameters()
+    figure_dir = parameters["results_dir"] + "/figures/"
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
     #plt.show()
+    plt.savefig(figure_dir + save_name+".pdf")
+    plt.clf()
+
     pass
 
 def contrast_plot(full_information_trues, image_reference_trues, image_reference_falses, title):
