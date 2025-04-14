@@ -47,45 +47,53 @@ def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", 
         X.append(hidden_tracker.hidden_states[idx][f"{layer}_last_{token_pos}"])
     X = np.array(X)
     y = nonnans[label_col].values.astype(int)
+    X_perplexity = nonnans[f"{run_variant}_response_perplexity"].values.reshape(-1, 1)
     df = nonnans.reset_index(drop=True)
-    return X, y, df
+    return X, X_perplexity, y, df
 
 
-def split_dataset(X, y, df, train_size=0.8):
+def split_dataset(X, X_perplexity, y, df, train_size=0.8):
     idxs = list(range(len(y)))
     np.random.shuffle(idxs)
     n_train = int(len(y) * train_size)
     train_idxs = idxs[:n_train]
     test_idxs = idxs[n_train:]
     X_train = X[train_idxs]
+    X_perplexity_train = X_perplexity[train_idxs]
     y_train = y[train_idxs]
     X_test = X[test_idxs]
+    X_perplexity_test = X_perplexity[test_idxs]
     y_test = y[test_idxs]
     df_train = df.iloc[train_idxs]
     df_test = df.iloc[test_idxs]
-    return X_train, y_train, X_test, y_test, df_train, df_test
+    return X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test
 
 def split_ood_dataset(data_dict, test_dataset=None):
     # data_dict is a dictionary with X, y and df, test_dataset is a key in this dict
     X_train = []
+    X_perplexity_train = []
     y_train = []
     df_train = []
     X_test = None
+    X_perplexity_test = None
     y_test = None
     df_test = None
     for key in data_dict:
         if key == test_dataset:
             X_test = data_dict[key]["X"]
             y_test = data_dict[key]["y"]
+            X_perplexity_test = data_dict[key]["X_perplexity"]
             df_test = data_dict[key]["df"]
         else:
             X_train.append(data_dict[key]["X"])
+            X_perplexity_train.append(data_dict[key]["X_perplexity"])
             y_train.append(data_dict[key]["y"])
             df_train.append(data_dict[key]["df"])
     X_train = np.concatenate(X_train)
+    X_perplexity_train = np.concatenate(X_perplexity_train)
     y_train = np.concatenate(y_train)
     df_train = pd.concat(df_train, ignore_index=True)
-    return X_train, y_train, X_test, y_test, df_train, df_test
+    return X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test
 
 
 
@@ -112,13 +120,13 @@ def safe_length(x):
     return len(x.split(" "))
 
 
-def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, prediction_dir=None, validation_split=0.15, parameters=None):
+def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, validation_split=0.15, parameters=None):
     if parameters is None:
         parameters = load_parameters()
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, train_size=1-validation_split, random_state=42)
+    #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, train_size=1-validation_split, random_state=42)
     model.fit(X_train, y_train)
     train_pred = model.predict_proba(X_train)
-    val_pred = model.predict_proba(X_val)
+    #val_pred = model.predict_proba(X_val)
     test_pred = model.predict_proba(X_test)
     test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
     if verbose:
@@ -126,13 +134,14 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
         print_base_rate(y_test, verbose=verbose, parameters=parameters)
         parameters["logger"].info(f"Total Test Accuracy: {test_acc}")
         parameters["logger"].info(f"Test Precision: {test_prec}, Test Recall: {test_recall}, Test F1: {test_f1}, Test AUC: {test_auc}")
-    threshold = 0.95
-    perc_selected, accuracy, precision, recall, f1, auc = compute_threshold_metrics(y_test, test_pred, threshold)
-    if verbose:
-        parameters["logger"].info(f"With threshold {threshold}: Predicts on {round(perc_selected*100, 2)} % of samples (Test)")
-        parameters["logger"].info(f"Test Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}, AUC: {auc}")
-    perc_selected, accuracy, val_acc, quartile, selected = compute_conformal_metrics(y_true_val=y_val, y_pred_proba_val=val_pred, y_true_test=y_test, y_pred_proba_test=test_pred, confidence=0.91)
-    if verbose:
+    #threshold = 0.95
+    #perc_selected, accuracy, precision, recall, f1, auc = compute_threshold_metrics(y_test, test_pred, threshold)
+    #if verbose:
+    #    parameters["logger"].info(f"With threshold {threshold}: Predicts on {round(perc_selected*100, 2)} % of samples (Test)")
+    #    parameters["logger"].info(f"Test Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}, AUC: {auc}")
+    #perc_selected, accuracy, val_acc, quartile, selected = compute_conformal_metrics(y_true_val=y_val, y_pred_proba_val=val_pred, y_true_test=y_test, y_pred_proba_test=test_pred, confidence=0.91)
+    if verbose and False:
+        selected = None
         if selected is None:
             parameters["logger"].info(f"Unable to find conformal quartile")
         else:
@@ -153,6 +162,14 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
         np.save(f"{savedir}//test_pred.npy", test_pred)
         model.save(f"{savedir}/")
         write_meta(f"{prediction_dir}/", meta, parameters["logger"])
+    parameters['logger'].info("This is compared to perplexity based decision making:")
+    model.fit(X_perplexity_train, y_train)
+    _ = model.predict_proba(X_perplexity_train)
+    test_pred_perp = model.predict_proba(X_perplexity_test)
+    test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
+    if verbose:
+        parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
+        parameters["logger"].info(f"Perplexity based Base Rate: ")
     return train_pred, test_pred, test_acc
 
 
@@ -162,7 +179,7 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
 @click.option('--layer', type=int, default=10, help='The layer of the model to use')
 @click.option("--run_variant", type=click.Choice(["identification","image_reference", "full_information", "trivial_black"]), default="image_reference", help="The variant of the prompt to use")
 @click.option("--metric", type=click.Choice(["two_way_inclusion", "exact_match"]), default="two_way_inclusion", help="The metric to use as the label")
-@click.option("--token_pos", type=click.Choice(["input", "output"]), default="input", help="The position of the token to use")
+@click.option("--token_pos", type=click.Choice(["input", "output"]), default="output", help="The position of the token to use")
 @click.pass_obj
 def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, metric, token_pos):
     np.random.seed(parameters["random_seed"])
@@ -170,25 +187,25 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
         dataset = datasets[0]
         parameters["logger"].info(f"Only one dataset {datasets[0]} found. Using that for training and testing.")
         results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/layer_{layer}"
-        X, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
-        X_train, y_train, X_test, y_test, df_train, df_test = split_dataset(X, y, df)
+        X, X_perplexity, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
+        X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_dataset(X, X_perplexity, y, df)
         prediction_dir = results_dir
         model = Linear()
-        do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, prediction_dir=prediction_dir, parameters=parameters)
+        do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=prediction_dir, parameters=parameters)
     else:
         parameters["logger"].info(f"Multiple datasets found {datasets}. Conducting OOD experiment and saving a single weight when trained on all.")
         xydfs = {}
         for dataset in datasets:
-            X, y, df = get_xydfs(dataset, vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
-            xydfs[dataset] = {"X": X, "y": y, "df": df}
+            X, X_perplexity, y, df = get_xydfs(dataset, vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
+            xydfs[dataset] = {"X": X, "y": y, "df": df, "X_perplexity": X_perplexity}
         for dataset in datasets:
             model = Linear()
-            X_train, y_train, X_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
-            do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, parameters=parameters)
-        X_train, y_train, X_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
-        results_dir = parameters["results_dir"] + f"all/{vlm}/hidden_states/{run_variant}/layer_{layer}"
+            X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
+            do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
+        X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
+        results_dir = parameters["results_dir"] + f"all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
         model = Linear()
-        do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, prediction_dir=results_dir, parameters=parameters)    
+        do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=results_dir, parameters=parameters)
 
 if __name__ == "__main__":
     fit_hidden_state_predictor()
