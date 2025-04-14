@@ -155,7 +155,7 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
 
 @click.command()
 @click.option("--datasets", multiple=True, required=True)
-@click.option("--vlm", required=True, type=click.Choice(["llava-v1.6-mistral-7b-hf", "llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"]), help="The model whose hidden states to use")
+@click.option("--vlm", type=click.Choice(["llava-v1.6-mistral-7b-hf", "llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"], default="llava-v1.6-vicuna-7b-hf"), help="The model whose hidden states to use")
 @click.option('--layer', type=int, default=10, help='The layer of the model to use')
 @click.option("--run_variant", type=click.Choice(["identification","image_reference", "full_information", "trivial_black"]), default="image_reference", help="The variant of the prompt to use")
 @click.option("--metric", type=click.Choice(["two_way_inclusion", "exact_match"]), default="two_way_inclusion", help="The metric to use as the label")
