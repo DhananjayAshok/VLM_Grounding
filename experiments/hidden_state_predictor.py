@@ -13,6 +13,8 @@ from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 from utils.hash_handling import write_meta, hash_meta_dict
 from experiments.grounding_utils.common import VocabProjectionTracking
+import warnings
+from sklearn.exceptions import ConvergenceWarning
 
 def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", metric="two_way_inclusion", token_pos="input"):
     hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
@@ -121,61 +123,65 @@ def safe_length(x):
 
 
 def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, validation_split=0.15, parameters=None):
-    if parameters is None:
-        parameters = load_parameters()
-    #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, train_size=1-validation_split, random_state=42)
-    model.fit(X_train, y_train)
-    train_pred = model.predict_proba(X_train)
-    #val_pred = model.predict_proba(X_val)
-    test_pred = None
-    if X_test is not None:
-        test_pred = model.predict_proba(X_test)
-        test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
-        if verbose:
-            parameters["logger"].info(f"Base Rate: ")
-            print_base_rate(y_test, verbose=verbose, parameters=parameters)
-            parameters["logger"].info(f"Total Test Accuracy: {test_acc}")
-            parameters["logger"].info(f"Test Precision: {test_prec}, Test Recall: {test_recall}, Test F1: {test_f1}, Test AUC: {test_auc}")
-    else:
-        parameters["logger"].warning(f"Got no X_test in model fit. This should only happen if you are running OOD hidden state modeling.")
-    #threshold = 0.95
-    #perc_selected, accuracy, precision, recall, f1, auc = compute_threshold_metrics(y_test, test_pred, threshold)
-    #if verbose:
-    #    parameters["logger"].info(f"With threshold {threshold}: Predicts on {round(perc_selected*100, 2)} % of samples (Test)")
-    #    parameters["logger"].info(f"Test Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}, AUC: {auc}")
-    #perc_selected, accuracy, val_acc, quartile, selected = compute_conformal_metrics(y_true_val=y_val, y_pred_proba_val=val_pred, y_true_test=y_test, y_pred_proba_test=test_pred, confidence=0.91)
-    if verbose and False:
-        selected = None
-        if selected is None:
-            parameters["logger"].info(f"Unable to find conformal quartile")
-        else:
-            parameters["logger"].info(f"Conformal Predicts on {round(perc_selected*100, 2)} % of samples (Test)")
-            # within selected columns:
-            parameters["logger"].info(f"Distribution of probe target in selected columns:")
-            print_base_rate(y_test[selected], verbose=True)
-            parameters["logger"].info(f"Test Accuracy: {accuracy}, Val Accuracy: {val_acc}, Quartile: {quartile}")
-        
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        if parameters is None:
+            parameters = load_parameters()
+        #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, train_size=1-validation_split, random_state=42)
 
-    if prediction_dir is not None:
-        meta = {"random_seed": parameters["random_seed"]}
-        meta_hash = hash_meta_dict(meta)
-        savedir = f"{prediction_dir}/{meta_hash}/"
-        if not os.path.exists(savedir):
-            os.makedirs(savedir)
-        np.save(f"{savedir}//train_pred.npy", train_pred)
-        if test_pred is not None:
-            np.save(f"{savedir}//test_pred.npy", test_pred)
-        model.save(f"{savedir}/")
-        write_meta(f"{prediction_dir}/", meta, parameters["logger"])
-    parameters['logger'].info("This is compared to perplexity based decision making:")
-    model.fit(X_perplexity_train, y_train)
-    _ = model.predict_proba(X_perplexity_train)
-    if X_perplexity_test is not None:
-        test_pred_perp = model.predict_proba(X_perplexity_test)
-        test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
-        if verbose:
-            parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
-    return train_pred, test_pred, test_acc
+        model.fit(X_train, y_train)
+        train_pred = model.predict_proba(X_train)
+        #val_pred = model.predict_proba(X_val)
+        test_pred = None
+        test_acc = None
+        if X_test is not None:
+            test_pred = model.predict_proba(X_test)
+            test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
+            if verbose:
+                parameters["logger"].info(f"Base Rate: ")
+                print_base_rate(y_test, verbose=verbose, parameters=parameters)
+                parameters["logger"].info(f"Total Test Accuracy: {test_acc}")
+                parameters["logger"].info(f"Test Precision: {test_prec}, Test Recall: {test_recall}, Test F1: {test_f1}, Test AUC: {test_auc}")
+        else:
+            parameters["logger"].warning(f"Got no X_test in model fit. This should only happen if you are running OOD hidden state modeling.")
+        #threshold = 0.95
+        #perc_selected, accuracy, precision, recall, f1, auc = compute_threshold_metrics(y_test, test_pred, threshold)
+        #if verbose:
+        #    parameters["logger"].info(f"With threshold {threshold}: Predicts on {round(perc_selected*100, 2)} % of samples (Test)")
+        #    parameters["logger"].info(f"Test Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}, AUC: {auc}")
+        #perc_selected, accuracy, val_acc, quartile, selected = compute_conformal_metrics(y_true_val=y_val, y_pred_proba_val=val_pred, y_true_test=y_test, y_pred_proba_test=test_pred, confidence=0.91)
+        if verbose and False:
+            selected = None
+            if selected is None:
+                parameters["logger"].info(f"Unable to find conformal quartile")
+            else:
+                parameters["logger"].info(f"Conformal Predicts on {round(perc_selected*100, 2)} % of samples (Test)")
+                # within selected columns:
+                parameters["logger"].info(f"Distribution of probe target in selected columns:")
+                print_base_rate(y_test[selected], verbose=True)
+                parameters["logger"].info(f"Test Accuracy: {accuracy}, Val Accuracy: {val_acc}, Quartile: {quartile}")
+            
+
+        if prediction_dir is not None:
+            meta = {"random_seed": parameters["random_seed"]}
+            meta_hash = hash_meta_dict(meta)
+            savedir = f"{prediction_dir}/{meta_hash}/"
+            if not os.path.exists(savedir):
+                os.makedirs(savedir)
+            np.save(f"{savedir}//train_pred.npy", train_pred)
+            if test_pred is not None:
+                np.save(f"{savedir}//test_pred.npy", test_pred)
+            model.save(f"{savedir}/")
+            write_meta(f"{prediction_dir}/", meta, parameters["logger"])
+        parameters['logger'].info("This is compared to perplexity based decision making:")
+        model.fit(X_perplexity_train, y_train)
+        _ = model.predict_proba(X_perplexity_train)
+        if X_perplexity_test is not None:
+            test_pred_perp = model.predict_proba(X_perplexity_test)
+            test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
+            if verbose:
+                parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
+        return train_pred, test_pred, test_acc
 
 
 @click.command()
