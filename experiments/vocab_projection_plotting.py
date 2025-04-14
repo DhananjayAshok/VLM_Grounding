@@ -27,8 +27,8 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
         true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters)
         true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
-        lineplot(true_kl_divs, false_kl_divs, title=f"{dataset} {vlm} {run_variant} KL Divergence")
-        lineplot(true_proj_probs, false_proj_probs, title=f"{dataset} {vlm} {run_variant} Projection Probability")
+        lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
+        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}_{vlm}_{run_variant}_projection_probability")
     if "full_information" in run_variants and "image_reference" in run_variants:
         pass
 
@@ -79,7 +79,7 @@ def separate_by_metric(dict_array, results_df, metric_col, parameters=None):
                 log_error(parameters["logger"], f"Invalid value for {metric_col}: {row[metric_col]}. Must be True or False or None.")
     return np.array(trues), np.array(falses)
 
-def lineplot(trues, falses, title, ylabel):
+def lineplot(trues, falses, ylabel, save_name):
     columns = ["Layer Index", ylabel,"Linking Status"]
     data = []
     for item in trues:
@@ -95,7 +95,7 @@ def lineplot(trues, falses, title, ylabel):
     sns.lineplot(data=data_df, x="Layer Index", y=ylabel, hue="Linking Status", palette=["green", "red"], linewidth=2.5) 
     plt.title("")
     plt.legend()
-    show()
+    show(save_name)
 
 
 def show(save_name, parameters=None):
