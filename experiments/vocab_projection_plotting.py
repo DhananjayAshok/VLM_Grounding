@@ -14,7 +14,7 @@ sns.set_style("whitegrid")
 @click.command()
 @click.option("--dataset", type=str, required=True, help="Dataset name")
 @click.option("--vlm", type=str, help="VLM name", default="llava-v1.6-vicuna-7b-hf")
-@click.option("--run_variants", type=click.Choice(["identification", "full_information", "image_reference", "trivial"]), multiple=True, default=["image_reference", "full_information"], help="Run variants to visualize")
+@click.option("--run_variants", type=click.Choice(["identification", "full_information", "image_reference", "trivial_black_full_information", "trivial_black_image_reference"]), multiple=True, default=["image_reference", "full_information", "trivial_black_image_reference"], help="Run variants to visualize")
 @click.option("--metric", type=str, default="two_way_inclusion", help="Metric to visualize")
 @click.pass_obj
 def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
@@ -22,7 +22,8 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
     total_projections = {}
     for run_variant in run_variants:
         kl_div, proj_prob, total_projection = recollect_projection(dataset, vlm, run_variant, parameters)
-        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric, parameters)
+        metric_col = f"{metric}_{run_variant}_response"
+        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric_col, parameters)
         true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric, parameters)
         true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, parameters)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
@@ -59,23 +60,23 @@ def recollect_projection(dataset, vlm, run_variant, parameters=None):
         return
     return vocab_projection_tracker.kl_divergence, vocab_projection_tracker.projection_prob, vocab_projection_tracker.total_projection
 
-def separate_by_metric(dict_array, results_df, metric, parameters=None):
+def separate_by_metric(dict_array, results_df, metric_col, parameters=None):
     if  parameters is None:
         parameters = load_parameters()
     trues = []
     falses = []
     for i, row in results_df.iterrows():
-        if row[metric] is None:
+        if np.isnan(row[metric_col]) or row[metric_col] is None:
             continue
         else:
             if i not in dict_array:
                 log_error(parameters["logger"], f"Index {i} not found in dict_array.")
-            if row[metric] == True:
+            if row[metric_col] == True:
                 trues.append(dict_array[i])
-            elif row[metric] == False:
+            elif row[metric_col] == False:
                 falses.append(dict_array[i])
             else:
-                log_error(parameters["logger"], f"Invalid value for {metric}: {row[metric]}. Must be True or False or None.")
+                log_error(parameters["logger"], f"Invalid value for {metric_col}: {row[metric_col]}. Must be True or False or None.")
     return np.array(trues), np.array(falses)
 
 def lineplot(trues, falses, title, ylabel):
@@ -87,10 +88,12 @@ def lineplot(trues, falses, title, ylabel):
     plt.xlabel("Layer Index")
     plt.ylabel(ylabel)
     plt.legend()
+    show()
+
+
+def show():
     #plt.show()
-
-
-
+    pass
 
 def contrast_plot(full_information_trues, image_reference_trues, image_reference_falses, title):
     layer_idx = None

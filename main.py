@@ -3,7 +3,7 @@ import click
 from experiments.grounding import grounding_experiment
 from experiments.hidden_state_predictor import fit_hidden_state_predictor
 from experiments.vocab_projection_plotting import visualize_vocab_projection
-from experiments.okvqa_inference import setup_okvqa, okvqa_inference
+from experiments.okvqa_inference import setup_okvqa, okvqa_inference, evaluate_okvqa
 from data.automatic_qa_utils import generate_questions, validate_questions, deduplicate_questions, full_qa_pipeline
 from data import setup_data, validate_classes
 
@@ -42,6 +42,7 @@ main.add_command(fit_hidden_state_predictor, name="fit_hidden_states")
 main.add_command(visualize_vocab_projection, name="visualize_vocab_projection")
 main.add_command(setup_okvqa, name="setup_okvqa")
 main.add_command(okvqa_inference, name="run_okvqa")
+main.add_command(evaluate_okvqa, name="evaluate_okvqa")
 
 
 if __name__ == "__main__":
