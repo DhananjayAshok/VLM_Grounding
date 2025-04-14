@@ -31,6 +31,8 @@ class DataCreator():
             self.parameters = parameters
         self.object_str = "object"
         self.mcq = mcq
+        storage_dir = parameters["storage_dir"]
+        self.dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name+"_mcq" if self.mcq else self.dataset_name)
         
 
     def get_random_images(self, class_name, n=10):
@@ -127,7 +129,7 @@ class DataCreator():
 
         If you want to bypass this, you can inherit and override this function to just set self.validated_classes to all the classes.
         """
-        dataset_path = os.path.join(self.parameters["storage_dir"], "processed_datasets", self.dataset_name)
+        dataset_path = os.path.join(self.parameters["storage_dir"], "processed_datasets", self.dataset_name) # This one isn't different for MCQ so its ok
         validated_classes_path = os.path.join(dataset_path, "validated_classes.pkl")
         if os.path.exists(validated_classes_path):
             return self.load_validated_classes()
@@ -179,7 +181,7 @@ class DataCreator():
         """
         parameters = self.parameters
         storage_dir = parameters["storage_dir"]
-        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name)
+        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name) # This one isn't different for MCQ so its ok
         qa_path = os.path.join(dataset_path, "qas_deduplicated.json")
         generated_qa_path = os.path.join(dataset_path, "qas_generated.json")
         validated_qa_path = os.path.join(dataset_path, "qas_validated.json")
@@ -286,8 +288,7 @@ class DataCreator():
         """
         self.check_class_validation()
         parameters = load_parameters()
-        storage_dir = parameters["storage_dir"]
-        dataset_path = os.path.join(storage_dir, "processed_datasets", self.dataset_name+"_mcq" if self.mcq else self.dataset_name)
+        dataset_path = self.dataset_path # This one is different for MCQ and normal QA
         if not os.path.exists(dataset_path):
             os.makedirs(dataset_path)
         image_path = os.path.join(dataset_path, "images")
@@ -338,6 +339,16 @@ class DataCreator():
         self.save_data(target_datapoints=target_datapoints)
         self.parameters["logger"].info(f"Dataset {self.dataset_name} created and saved to processed_datasets folder.")
         return
+    
+    def get_data_df(self):
+        """
+        Returns the data csv for the dataset
+        """
+        dataset_path = self.dataset_path
+        data_csv_path = os.path.join(dataset_path, "data.csv")
+        if not os.path.exists(data_csv_path):
+            log_error(self.parameters["logger"], f"Data csv for {self.dataset_name} does not exist.")
+        return pd.read_csv(data_csv_path)
 
 
     def __str__(self):

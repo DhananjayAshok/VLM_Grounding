@@ -1,5 +1,4 @@
 import click
-from data.data_holder import get_data_creator
 from utils.log_handling import log_error
 import pandas as pd
 import numpy as np

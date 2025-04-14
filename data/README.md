@@ -54,15 +54,10 @@ Continuing the CIFAR100 example, it is added to the `data/data_holder.py` file l
 # data/data_holder.py
 from  data.cifar100.setup_cifar  import  CIFAR100Creator
 
-def get_data_creator(dataset_name, parameters=None):
+def get_data_creator(dataset_name, parameters=None, mcq=False):
     """
     Returns the data creator object for the given dataset name
     """
-    if "mcq" in dataset_name:
-        dataset_name, mcq_str = dataset_name.split("_")
-        mcq = True
-    else:
-        mcq = False
     if dataset_name == "mnist":
         return MNISTCreator(parameters=parameters, mcq=mcq)
     elif dataset_name == "cifar100":

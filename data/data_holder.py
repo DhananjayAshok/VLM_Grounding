@@ -8,15 +8,10 @@ from data.mnist.setup_mnist import MNISTCreator
 from data.cifar100.setup_cifar import CIFAR100Creator
 
 
-def get_data_creator(dataset_name, parameters=None):
+def get_data_creator(dataset_name, parameters=None, mcq=False):
     """
     Returns the data creator object for the given dataset name
     """
-    if "mcq" in dataset_name:
-        dataset_name, mcq_str = dataset_name.split("_")
-        mcq = True
-    else:
-        mcq = False
     if dataset_name == "mnist":
         return MNISTCreator(parameters=parameters, mcq=mcq)
     elif dataset_name == "cifar100":
@@ -30,16 +25,20 @@ def get_data_creator(dataset_name, parameters=None):
 
 
 class DataHolder:
-    def __init__(self, dataset_name: str, parameters=None, mcq=False):
-        self.dataset_name = dataset_name
+    def __init__(self, dataset_name: str, parameters=None):
         if parameters is None:
             self.parameters = load_parameters()
         else:
             self.parameters = parameters
-        data_df_path = os.path.join(parameters["storage_dir"], "processed_datasets", dataset_name, "data.csv")
-        self.data_df = pd.read_csv(data_df_path)
-        self.data_creator = get_data_creator(dataset_name, parameters)
-        # handles the _mcq in the dataset_name itself
+        if "mcq" in dataset_name:
+            dataset_name, mcq_str = dataset_name.split("_")
+            mcq = True
+        else:
+            mcq = False
+        self.dataset_name = dataset_name + "_mcq" if mcq else dataset_name
+        self.data_creator = get_data_creator(dataset_name, parameters, mcq=mcq)
+        self.data_df = self.data_creator.get_data_df()
+
 
     def __len__(self):
         return len(self.data_df)
