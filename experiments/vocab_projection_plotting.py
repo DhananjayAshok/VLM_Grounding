@@ -24,8 +24,8 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
         kl_div, proj_prob, total_projection = recollect_projection(dataset, vlm, run_variant, parameters)
         metric_col = f"{metric}_{run_variant}_response"
         true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric_col, parameters)
-        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric, parameters)
-        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, parameters)
+        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters)
+        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         lineplot(true_kl_divs, false_kl_divs, title=f"{dataset} {vlm} {run_variant} KL Divergence")
         lineplot(true_proj_probs, false_proj_probs, title=f"{dataset} {vlm} {run_variant} Projection Probability")
