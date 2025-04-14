@@ -52,7 +52,7 @@ def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", 
 
 
 def split_dataset(X, y, df, train_size=0.8):
-    idxs = range(len(y))
+    idxs = list(range(len(y)))
     np.random.shuffle(idxs)
     n_train = int(len(y) * train_size)
     train_idxs = idxs[:n_train]
