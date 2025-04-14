@@ -163,6 +163,7 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
 def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, metric):
     np.random.seed(parameters["random_seed"])
     if len(datasets) == 1:
+        dataset = datasets[0]
         parameters["logger"].info(f"Only one dataset {datasets[0]} found. Using that for training and testing.")
         results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/layer_{layer}"
         X, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric)
