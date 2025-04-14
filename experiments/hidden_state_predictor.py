@@ -127,6 +127,7 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
     model.fit(X_train, y_train)
     train_pred = model.predict_proba(X_train)
     #val_pred = model.predict_proba(X_val)
+    test_pred = None
     if X_test is not None:
         test_pred = model.predict_proba(X_test)
         test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
@@ -162,7 +163,8 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
         if not os.path.exists(savedir):
             os.makedirs(savedir)
         np.save(f"{savedir}//train_pred.npy", train_pred)
-        np.save(f"{savedir}//test_pred.npy", test_pred)
+        if test_pred is not None:
+            np.save(f"{savedir}//test_pred.npy", test_pred)
         model.save(f"{savedir}/")
         write_meta(f"{prediction_dir}/", meta, parameters["logger"])
     parameters['logger'].info("This is compared to perplexity based decision making:")
