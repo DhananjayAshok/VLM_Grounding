@@ -2,9 +2,9 @@ from utils.log_handling import log_error
 from evaluation.metrics import df_compute_metric_str
 
 
-def do_final_evaluation(df, parameters, verbose=False, okayvqa=False):
+def do_final_evaluation(df, parameters, verbose=False, okvqa=False):
     reference_column = "answer_str"
-    if not okayvqa:
+    if not okvqa:
         variants = ["full_information", "image_reference"]
         for trivial in ["black", "white", "noise"]:
             variants.append(f"trivial_{trivial}_full_information")
@@ -17,6 +17,8 @@ def do_final_evaluation(df, parameters, verbose=False, okayvqa=False):
         for candidate_column in candidate_columns:
             output_column = f"{metric}_{candidate_column}"
             df = df_compute_metric_str(metric, df, candidate_column, reference_column, output_column=output_column, save=False, parameters=parameters, verbose=verbose)
+    if okvqa:
+        return df
     for metric in metrics:
         for variant in ["full_information", "image_reference"]:
             output_columns = []

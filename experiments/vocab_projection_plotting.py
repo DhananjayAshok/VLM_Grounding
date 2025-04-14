@@ -13,7 +13,7 @@ sns.set_style("whitegrid")
 
 @click.command()
 @click.option("--dataset", type=str, required=True, help="Dataset name")
-@click.option("--vlm", type=str, required=True, help="VLM name")
+@click.option("--vlm", type=str, help="VLM name", default="llava-v1.6-vicuna-7b-hf")
 @click.option("--run_variants", type=click.Choice(["identification", "full_information", "image_reference", "trivial"]), multiple=True, default=["image_reference", "full_information"], help="Run variants to visualize")
 @click.option("--metric", type=str, default="two_way_inclusion", help="Metric to visualize")
 @click.pass_obj

@@ -1,6 +1,7 @@
 import click
 from utils.log_handling import log_error
 from experiments.grounding_utils.common import update_row, HiddenStateTracking, save
+from evaluation.grounding_evaluation import do_final_evaluation, log_final_evaluation
 from inference.vlms import get_vlm
 import os
 import json
@@ -104,3 +105,24 @@ def okvqa_inference(parameters, model):
     """
     vlm = get_vlm(model, hidden_state_tracking_mode=True, vocab_projection_mode=False)
     run_okvqa(parameters, vlm)
+
+
+@click.command()
+@click.option("--model", default="llava-v1.6-vicuna-7b-hf",help="The VLM whose grounding ability is being tested", type=click.Choice(["llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "llava-v1.6-mistral-7b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"]))
+@click.pass_obj
+def evaluate_okvqa(parameters, model, metrics):
+    """
+    Run inference on the OKVQA dataset using the specified VLM.
+    """
+    results_path = parameters["results_dir"] + f"/okvqa/{model}/final_results.csv"
+    if not os.path.exists(results_path):
+        log_error(parameters["logger"], f"Results file {results_path} does not exist. Please run the inference first.")
+        return
+    results_df = pd.read_csv(results_path)
+    results_df = do_final_evaluation(results_df, parameters, metrics=metrics, okvqa=True)
+    results_df.to_csv(results_path, index=False)
+    parameters["logger"].info(f"OKVQA evaluation completed and saved to {results_path}")
+    log_final_evaluation(results_df, parameters, okvqa=True)
+
+
+
