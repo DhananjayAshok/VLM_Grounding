@@ -94,6 +94,7 @@ class HuggingFaceInference:
             first_token_probs = probs[:, first_token_id]
             response["kl_divergence"] = div_array
             response["projection_prob"] = first_token_probs
+            response["total_projection"] = probs
             
         if self.hidden_state_tracking_mode:
             output_hidden_states = {}

@@ -173,10 +173,10 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
                 np.save(f"{savedir}//test_pred.npy", test_pred)
             model.save(f"{savedir}/")
             write_meta(f"{prediction_dir}/", meta, parameters["logger"])
-        parameters['logger'].info("This is compared to perplexity based decision making:")
-        model.fit(X_perplexity_train, y_train)
-        _ = model.predict_proba(X_perplexity_train)
         if X_perplexity_test is not None:
+            parameters['logger'].info("This is compared to perplexity based decision making:")
+            model.fit(X_perplexity_train, y_train)
+            _ = model.predict_proba(X_perplexity_train)
             test_pred_perp = model.predict_proba(X_perplexity_test)
             test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
             if verbose:

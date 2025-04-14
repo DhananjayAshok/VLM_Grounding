@@ -103,6 +103,7 @@ class VocabProjectionTracking:
         self.parameters = parameters
         self.kl_divergence = {}
         self.projection_prob = {}
+        self.total_projection = {}
         self.save_path = parameters["storage_dir"] + f"/vocab_projections/{dataset_name}/{vlm_name}/{run_variant}/"
         os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
 
@@ -118,8 +119,13 @@ class VocabProjectionTracking:
                 self.projection_prob = pickle.load(f)
         else:
             self.projection_prob = {}
-        if len(self.kl_divergence) != len(self.projection_prob):
-            log_error(self.parameters["logger"], f"Mismatch between kl_divergence and projection_prob lengths. {len(self.kl_divergence)} vs {len(self.projection_prob)}. This is a bug and shouldn't be happening.")
+        if os.path.exists(self.save_path+f"/total_projection.pkl"):
+            with open(self.save_path+f"/total_projection.pkl", "rb") as f:
+                self.total_projection = pickle.load(f)
+        else:
+            self.total_projection = {}
+        if len(self.kl_divergence) != len(self.projection_prob) or len(self.kl_divergence) != len(self.total_projection):
+            log_error(self.parameters["logger"], f"Mismatch between kl_divergence and projection_prob lengths. {len(self.kl_divergence)} vs {len(self.projection_prob)} vs {len(self.total_projection)}. This is a bug and shouldn't be happening.")
             raise ValueError("Mismatch between kl_divergence and projection_prob lengths.")
 
     def save_checkpoint(self):
@@ -127,15 +133,19 @@ class VocabProjectionTracking:
             pickle.dump(self.kl_divergence, f)
         with open(self.save_path+f"/projection_prob.pkl", "wb") as f:
             pickle.dump(self.projection_prob, f)
+        with open(self.save_path+f"/total_projection.pkl", "wb") as f:
+            pickle.dump(self.total_projection, f)
 
-    def add_projection(self, idx, kl_divergence, projection_prob):
+    def add_projection(self, idx, kl_divergence, projection_prob, total_projection):
         if idx not in self.kl_divergence:
             self.kl_divergence[idx] = kl_divergence
             self.projection_prob[idx] = projection_prob
+            self.total_projection[idx] = total_projection
         else:
             self.parameters["logger"].warning(f"Projection for index {idx} already exists. Overwriting.")
             self.kl_divergence[idx] = kl_divergence
             self.projection_prob[idx] = projection_prob
+            self.total_projection[idx] = total_projection
 
 
 def save(results_df, results_df_path, hidden_state_tracker=None, projection_tracker=None):
@@ -152,7 +162,7 @@ def update_row(results_df, idx, item_name, response, completed=True, hidden_stat
     if hidden_state_tracker is not None:
         hidden_state_tracker.add_hidden_state(idx, response["hidden_states"])
     if projection_tracker is not None:
-        projection_tracker.add_projection(idx, response["kl_divergence"], response["projection_prob"])
+        projection_tracker.add_projection(idx, response["kl_divergence"], response["projection_prob"], response["total_projection"])
     if completed:
         results_df.loc[idx, f"{item_name}_complete"] = True
     return
