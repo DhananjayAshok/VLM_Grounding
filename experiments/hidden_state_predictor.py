@@ -127,13 +127,16 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
     model.fit(X_train, y_train)
     train_pred = model.predict_proba(X_train)
     #val_pred = model.predict_proba(X_val)
-    test_pred = model.predict_proba(X_test)
-    test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
-    if verbose:
-        parameters["logger"].info(f"Base Rate: ")
-        print_base_rate(y_test, verbose=verbose, parameters=parameters)
-        parameters["logger"].info(f"Total Test Accuracy: {test_acc}")
-        parameters["logger"].info(f"Test Precision: {test_prec}, Test Recall: {test_recall}, Test F1: {test_f1}, Test AUC: {test_auc}")
+    if X_test is not None:
+        test_pred = model.predict_proba(X_test)
+        test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
+        if verbose:
+            parameters["logger"].info(f"Base Rate: ")
+            print_base_rate(y_test, verbose=verbose, parameters=parameters)
+            parameters["logger"].info(f"Total Test Accuracy: {test_acc}")
+            parameters["logger"].info(f"Test Precision: {test_prec}, Test Recall: {test_recall}, Test F1: {test_f1}, Test AUC: {test_auc}")
+    else:
+        parameters["logger"].warning(f"Got no X_test in model fit. This should only happen if you are running OOD hidden state modeling.")
     #threshold = 0.95
     #perc_selected, accuracy, precision, recall, f1, auc = compute_threshold_metrics(y_test, test_pred, threshold)
     #if verbose:
@@ -165,18 +168,18 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
     parameters['logger'].info("This is compared to perplexity based decision making:")
     model.fit(X_perplexity_train, y_train)
     _ = model.predict_proba(X_perplexity_train)
-    test_pred_perp = model.predict_proba(X_perplexity_test)
-    test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
-    if verbose:
-        parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
-        parameters["logger"].info(f"Perplexity based Base Rate: ")
+    if X_perplexity_test is not None:
+        test_pred_perp = model.predict_proba(X_perplexity_test)
+        test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
+        if verbose:
+            parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
     return train_pred, test_pred, test_acc
 
 
 @click.command()
 @click.option("--datasets", multiple=True, required=True)
 @click.option("--vlm", default="llava-v1.6-vicuna-7b-hf", type=click.Choice(["llava-v1.6-mistral-7b-hf", "llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"]), help="The model whose hidden states to use")
-@click.option('--layer', type=int, default=10, help='The layer of the model to use')
+@click.option('--layer', type=int, default=16, help='The layer of the model to use')
 @click.option("--run_variant", type=click.Choice(["identification","image_reference", "full_information", "trivial_black"]), default="image_reference", help="The variant of the prompt to use")
 @click.option("--metric", type=click.Choice(["two_way_inclusion", "exact_match"]), default="two_way_inclusion", help="The metric to use as the label")
 @click.option("--token_pos", type=click.Choice(["input", "output"]), default="output", help="The position of the token to use")
@@ -201,6 +204,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
         for dataset in datasets:
             model = Linear()
             X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
+            parameters["logger"].info(f"Testing on {dataset} after training on all other datasets.")
             do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
         X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
         results_dir = parameters["results_dir"] + f"all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
