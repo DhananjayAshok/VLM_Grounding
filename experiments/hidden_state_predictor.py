@@ -215,7 +215,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
             parameters["logger"].info(f"Testing on {dataset} after training on all other datasets.")
             do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
         X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
-        results_dir = parameters["results_dir"] + f"all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
+        results_dir = parameters["results_dir"] + f"/all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
         model = Linear()
         do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=results_dir, parameters=parameters)
 
