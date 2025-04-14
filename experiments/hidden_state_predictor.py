@@ -146,9 +146,12 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
     if prediction_dir is not None:
         meta = {"random_seed": parameters["random_seed"]}
         meta_hash = hash_meta_dict(meta)
-        np.save(f"{prediction_dir}/{meta_hash}/train_pred.npy", train_pred)
-        np.save(f"{prediction_dir}/{meta_hash}/test_pred.npy", test_pred)
-        model.save(f"{prediction_dir}/{meta_hash}/")
+        savedir = f"{prediction_dir}/{meta_hash}/"
+        if not os.path.exists(savedir):
+            os.makedirs(savedir)
+        np.save(f"{savedir}//train_pred.npy", train_pred)
+        np.save(f"{savedir}//test_pred.npy", test_pred)
+        model.save(f"{savedir}//{meta_hash}/")
         write_meta(f"{prediction_dir}/", meta, parameters["logger"])
     return train_pred, test_pred, test_acc
 
@@ -159,14 +162,15 @@ def do_model_fit(model, X_train, y_train, X_test, y_test, verbose=True, predicti
 @click.option('--layer', type=int, default=10, help='The layer of the model to use')
 @click.option("--run_variant", type=click.Choice(["identification","image_reference", "full_information", "trivial_black"]), default="image_reference", help="The variant of the prompt to use")
 @click.option("--metric", type=click.Choice(["two_way_inclusion", "exact_match"]), default="two_way_inclusion", help="The metric to use as the label")
+@click.option("--token_pos", type=click.Choice(["input", "output"]), default="input", help="The position of the token to use")
 @click.pass_obj
-def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, metric):
+def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, metric, token_pos):
     np.random.seed(parameters["random_seed"])
     if len(datasets) == 1:
         dataset = datasets[0]
         parameters["logger"].info(f"Only one dataset {datasets[0]} found. Using that for training and testing.")
         results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/layer_{layer}"
-        X, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric)
+        X, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
         X_train, y_train, X_test, y_test, df_train, df_test = split_dataset(X, y, df)
         prediction_dir = results_dir
         model = Linear()
@@ -175,7 +179,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
         parameters["logger"].info(f"Multiple datasets found {datasets}. Conducting OOD experiment and saving a single weight when trained on all.")
         xydfs = {}
         for dataset in datasets:
-            X, y, df = get_xydfs(dataset, vlm, layer, parameters, run_variant=run_variant, metric=metric)
+            X, y, df = get_xydfs(dataset, vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
             xydfs[dataset] = {"X": X, "y": y, "df": df}
         for dataset in datasets:
             model = Linear()
