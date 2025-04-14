@@ -102,5 +102,5 @@ def okvqa_inference(parameters, model):
     """
     Run inference on the OKVQA dataset using the specified VLM.
     """
-    vlm = get_vlm(model)
+    vlm = get_vlm(model, hidden_state_tracking_mode=True, vocab_projection_mode=True)
     run_okvqa(parameters, vlm)
