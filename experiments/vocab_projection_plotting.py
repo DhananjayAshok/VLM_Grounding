@@ -79,7 +79,9 @@ def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict
             continue
         else:
             if i not in dict_array:
-                log_error(parameters["logger"], f"Index {i} not found in dict_array.")
+                parameters['logger'].warn(f"Index {i} not found in dict_array.")
+                continue
+                #log_error(parameters["logger"], f"Index {i} not found in dict_array.")
             if row[metric_col] == True:
                 if dict_return:
                     trues[i] = dict_array[i]
