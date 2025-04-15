@@ -266,11 +266,12 @@ class DataCreator():
             if "options" not in qa:
                 qa_string = qa_string + "\nAnswer: "
             else:
+                qa_string = qa_string + "\nOptions: "
                 options = qa["options"]
                 np.random.shuffle(options)
                 answer_index = options.index(answer)
                 for i, option in enumerate(options):
-                    qa_string = qa_string + f"{num_to_alph(i)}: {option}"
+                    qa_string = qa_string + f"\n{num_to_alph(i)}: {option}"
                 qa_string = qa_string + "\nAnswer: "
             qa_strings.append({"question": qa_string, "answer": answer, "source": source})
         return qa_strings
