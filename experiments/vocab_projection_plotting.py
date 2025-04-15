@@ -136,6 +136,8 @@ def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_
     data = []
     for idx in tqdm(candidate_truths, desc="Computing KL Divergence", total=len(candidate_truths)):
         if idx not in reference_truths:
+            parameters["logger"].warn(f"Index {idx} not found in reference_truths.")
+            continue
             log_error(parameters["logger"], f"Index {idx} not found in reference_truths.")
         reference_truth = reference_truths[idx]
         candidate_truth = candidate_truths[idx]
