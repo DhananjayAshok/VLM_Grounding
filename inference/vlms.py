@@ -145,7 +145,7 @@ class LlaVaInference(HuggingFaceInference):
         ]
         prompt = self.processor.apply_chat_template(conversation, add_generation_prompt=True)
         inputs = self.processor(images=[image], text=prompt, return_tensors="pt").to(self.model.device)
-        return self.generate(inputs, max_new_tokens=100)
+        return self.generate(inputs, max_new_tokens=10)
     
     def __str__(self):
         return f"{self.variant}"
