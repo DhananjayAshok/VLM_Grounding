@@ -6,6 +6,7 @@ from experiments.grounding_utils.common import VocabProjectionTracking
 from inference.vlms import kl_divergence
 import matplotlib.pyplot as plt
 import seaborn as sns
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 
@@ -25,12 +26,15 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
         metric_col = f"{metric}_{run_variant}_response"
         true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric_col, parameters)
         true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters)
-        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters)
+        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters, dict_return=True)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
         lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}_{vlm}_{run_variant}_projection_probability")
     if "full_information" in run_variants and "image_reference" in run_variants:
-        pass
+        plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_full_information_vs_image_reference", parameters)
+    if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
+        plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_trivial_black_vs_image_reference", parameters)
+    return 
 
 
 
@@ -60,11 +64,16 @@ def recollect_projection(dataset, vlm, run_variant, parameters=None):
         return
     return vocab_projection_tracker.kl_divergence, vocab_projection_tracker.projection_prob, vocab_projection_tracker.total_projection
 
-def separate_by_metric(dict_array, results_df, metric_col, parameters=None):
+
+def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict_return=False):
     if  parameters is None:
         parameters = load_parameters()
-    trues = []
-    falses = []
+    if dict_return:
+        trues = {}
+        falses = {}
+    else:
+        trues = []
+        falses = []
     for i, row in results_df.iterrows():
         if np.isnan(row[metric_col]) or row[metric_col] is None:
             continue
@@ -72,12 +81,21 @@ def separate_by_metric(dict_array, results_df, metric_col, parameters=None):
             if i not in dict_array:
                 log_error(parameters["logger"], f"Index {i} not found in dict_array.")
             if row[metric_col] == True:
-                trues.append(dict_array[i])
+                if dict_return:
+                    trues[i] = dict_array[i]
+                else:
+                    trues.append(dict_array[i])
             elif row[metric_col] == False:
-                falses.append(dict_array[i])
+                if dict_return:
+                    falses[i] = dict_array[i]
+                else:
+                    falses.append(dict_array[i])
             else:
                 log_error(parameters["logger"], f"Invalid value for {metric_col}: {row[metric_col]}. Must be True or False or None.")
-    return np.array(trues), np.array(falses)
+    if dict_return:
+        return trues, falses
+    else:
+        return np.array(trues), np.array(falses)
 
 def lineplot(trues, falses, ylabel, save_name):
     columns = ["Layer Index", ylabel,"Linking Status"]
@@ -90,9 +108,7 @@ def lineplot(trues, falses, ylabel, save_name):
             data.append([layer_idx, layer, "Failure"])
     data_df = pd.DataFrame(data, columns=columns)
     data_df["Layer Index"] = data_df["Layer Index"].astype(int)
-    layer_idx = None # This is a placeholder, you need to define how to get the layer index
-    data_df = None # You basically need to form a dataframe with the data you want to plot
-    sns.lineplot(data=data_df, x="Layer Index", y=ylabel, hue="Linking Status", palette=["green", "red"], linewidth=2.5) 
+    sns.lineplot(data=data_df, x="Layer Index", y=ylabel, hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="sd") 
     plt.title("")
     plt.legend()
     show(save_name)
@@ -110,9 +126,41 @@ def show(save_name, parameters=None):
 
     pass
 
-def contrast_plot(full_information_trues, image_reference_trues, image_reference_falses, title):
-    layer_idx = None
-    data_df = None
+def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_name, parameters):
+    """
+    Compute the KL divergence between the reference and candidate distributions.
+    """
+    columns = ["Layer Index", "KL Divergence", "Linking Status"]
+    data = []
+    for idx in tqdm(candidate_truths, desc="Computing KL Divergence", total=len(candidate_truths)):
+        if idx not in reference_truths:
+            log_error(parameters["logger"], f"Index {idx} not found in reference_truths.")
+        reference_truth = reference_truths[idx]
+        candidate_truth = candidate_truths[idx]
+        n_layers, vocab_size = reference_truth.shape
+        for layer in range(n_layers):
+            kl_div = kl_divergence(reference_truth[layer], candidate_truth[layer])
+            data.append([layer, kl_div, "Success"])
+    for idx in tqdm(candidate_falses, desc="Computing KL Divergence", total=len(candidate_falses)):
+        if idx not in reference_truths:
+            log_error(parameters["logger"], f"Index {idx} not found in reference_truths.")
+        reference_truth = reference_truths[idx]
+        candidate_false = candidate_falses[idx]
+        n_layers, vocab_size = reference_truth.shape
+        for layer in range(n_layers):
+            kl_div = kl_divergence(reference_truth[layer], candidate_false[layer])
+            data.append([layer, kl_div, "Failure"])
+    data_df = pd.DataFrame(data, columns=columns)
+    data_df["Layer Index"] = data_df["Layer Index"].astype(int)
+    sns.lineplot(data=data_df, x="Layer Index", y="KL Divergence", hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="sd")
+    plt.title("")
+    plt.legend()
+    show(save_name, parameters)
+
+
+
+    
+
 
 
 
