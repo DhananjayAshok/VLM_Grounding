@@ -110,7 +110,7 @@ def okvqa_inference(parameters, model):
 @click.command()
 @click.option("--model", default="llava-v1.6-vicuna-7b-hf",help="The VLM whose grounding ability is being tested", type=click.Choice(["llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "llava-v1.6-mistral-7b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"]))
 @click.pass_obj
-def evaluate_okvqa(parameters, model, metrics):
+def evaluate_okvqa(parameters, model):
     """
     Run inference on the OKVQA dataset using the specified VLM.
     """
@@ -119,7 +119,7 @@ def evaluate_okvqa(parameters, model, metrics):
         log_error(parameters["logger"], f"Results file {results_path} does not exist. Please run the inference first.")
         return
     results_df = pd.read_csv(results_path)
-    results_df = do_final_evaluation(results_df, parameters, metrics=metrics, okvqa=True)
+    results_df = do_final_evaluation(results_df, parameters, okvqa=True)
     results_df.to_csv(results_path, index=False)
     parameters["logger"].info(f"OKVQA evaluation completed and saved to {results_path}")
     log_final_evaluation(results_df, parameters, okvqa=True)
