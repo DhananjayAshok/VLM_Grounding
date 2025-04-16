@@ -102,4 +102,4 @@ label_map_inverse = {'apple_pie': 0,
 
 fine_labels = [None for _ in range(101)]
 for food_cls, cls_idx in label_map_inverse.items():
-    fine_labels[cls_idx] = food_cls
+    fine_labels[cls_idx] = food_cls.replace("_", " ")
