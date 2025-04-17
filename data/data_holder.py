@@ -7,6 +7,7 @@ from utils.parameter_handling import load_parameters
 from data.mnist.setup_mnist import MNISTCreator
 from data.cifar100.setup_cifar import CIFAR100Creator
 from data.food101.setup_food101 import Food101Creator
+from data.landmarks.setup_landmarks import LandmarksCreator
 
 
 def get_data_creator(dataset_name, parameters=None, mcq=False):
@@ -20,7 +21,7 @@ def get_data_creator(dataset_name, parameters=None, mcq=False):
     elif dataset_name == "food101":
         return Food101Creator(parameters=parameters, mcq=mcq)
     elif dataset_name == "landmarks":
-        pass
+        return LandmarksCreator(parameters=parameters, mcq=mcq)
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 
