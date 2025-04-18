@@ -9,7 +9,8 @@ from utils.log_handling import log_error
 
 def load_landmarks(raw_data_path):
     dset = torchvision.datasets.ImageFolder(root=f"{raw_data_path}/landmark_images", transform=torchvision.transforms.ToTensor())
-    labels = [label[3:] for label in dset.classes]
+    labels = [location.replace("_", " ") for location in dset.classes]
+    dset.classes = labels
 
     return dset, labels
 
