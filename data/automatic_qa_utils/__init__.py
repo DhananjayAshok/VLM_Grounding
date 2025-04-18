@@ -67,7 +67,7 @@ def handle_question_deduplication(parameters, dataset_name, weak_llm):
             llm = get_llm(weak_llm)
         else:
             llm = weak_llm
-        deduplicate_qas(qas, llm)
+        qas = deduplicate_qas(qas, llm)
         with open(deduped_qas_path, "w") as f:
             json.dump(qas, f)
         parameters["logger"].info(f"Deduplicated questions for {dataset_name} and saved to {deduped_qas_path}")
