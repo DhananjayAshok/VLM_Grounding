@@ -29,7 +29,7 @@ class Food101Creator(DataCreator):
         self.dset, self.labels = load_food101(raw_data_path=parameters["data_dir"]+"/raw/")
 
     def get_identification_prefix(self, class_name):
-        return f"There are many food items in the world (e.g. pupusa, kimchi jjiggae, scrambled eggs) the object in the image is a food item, what is its name? \nAnswer: "
+        return f"There are many food items in the world (e.g. pupusa, kimchi jjiggae, scrambled eggs). The object in the image is a food item, what is its name? Respond with only the short name for the food item from the following list - {fine_labels}. \nAnswer: "
 
     
     def get_random_images(self, class_name, n=10):
