@@ -3,6 +3,7 @@ import os
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 from experiments.grounding_utils.common import VocabProjectionTracking
+from experiments.hidden_state_predictor import get_hidden_states
 from inference.vlms import kl_divergence
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -28,12 +29,26 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
         true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters)
         true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters, dict_return=True)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
-        lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
+        #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
         lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}_{vlm}_{run_variant}_projection_probability")
     if "full_information" in run_variants and "image_reference" in run_variants:
         plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
         plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_trivial_black_vs_image_reference", parameters)
+    del total_projections
+
+    hidden_states = {}
+    if "image_reference" in run_variants:
+        true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters)
+        hidden_states["image_reference"] = (true_hidden, false_hidden)
+        if "full_information" in run_variants:
+            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters)
+            hidden_states["full_information"] = (true_hidden, false_hidden)
+            plot_contrast_cosine(hidden_states["image_reference"][0], hidden_states["full_information"][0], hidden_states["full_information"][1], f"{dataset}_{vlm}_cosine_full_information_vs_image_reference", parameters)
+        if "trivial_black_image_reference" in run_variants:
+            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters)
+            hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
+            plot_contrast_cosine(hidden_states["image_reference"][0], hidden_states["trivial_black_image_reference"][0], hidden_states["trivial_black_image_reference"][1], f"{dataset}_{vlm}_cosine_trivial_black_vs_image_reference", parameters)
     return 
 
 
@@ -48,6 +63,34 @@ def get_results_df(dataset, vlm, parameters=None):
     return results_df
 
 
+def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters, token_pos="input"):
+    _, hidden_tracker, metric_col = get_hidden_states(dataset, model, metric, run_variant, parameters)
+    dict_array = hidden_tracker.hidden_states
+    trues = {}
+    falses = {}
+    for i, row in results_df.iterrows():
+        if np.isnan(row[metric_col]) or row[metric_col] is None:
+            continue
+        else:
+            if i not in dict_array:
+                parameters['logger'].warn(f"Index {i} not found in dict_array.")
+                continue
+                #log_error(parameters["logger"], f"Index {i} not found in dict_array.")
+            internal_dict = {}
+            for key in dict_array[i]:
+                layer, last, token_pos_item = key.split("_")
+                layer = int(layer)
+                if token_pos_item == token_pos:
+                    internal_dict[layer] = dict_array[i][key]
+            if row[metric_col] == True:
+                trues[i] = internal_dict
+            elif row[metric_col] == False:
+                falses[i] = internal_dict
+            else:
+                log_error(parameters["logger"], f"Invalid value for {metric_col}: {row[metric_col]}. Must be True or False or None.")
+    return trues, falses
+
+
 
 def recollect_projection(dataset, vlm, run_variant, parameters=None):
     """
@@ -60,7 +103,7 @@ def recollect_projection(dataset, vlm, run_variant, parameters=None):
     vocab_projection_tracker.load_checkpoint()
     # Check if the data is empty
     if vocab_projection_tracker.kl_divergence == {}:
-        log_error(parameters["logger"], f"No vocab projection data found for {dataset} {vlm}.")
+        log_error(parameters["logger"], f"No vocab projection data found for {dataset} {vlm} {run_variant}.")
         return
     return vocab_projection_tracker.kl_divergence, vocab_projection_tracker.projection_prob, vocab_projection_tracker.total_projection
 
@@ -161,6 +204,45 @@ def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_
     plt.legend()
     show(save_name, parameters)
 
+def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, save_name, parameters):
+    columns = ["Layer Index", "Cosine Similarity", "Linking Status"]
+    data = []
+    for idx in tqdm(candidate_truths, desc="Computing Cosine Similarity", total=len(candidate_truths)):
+        if idx not in reference_truths:
+            parameters["logger"].warn(f"Index {idx} not found in reference_truths.")
+            continue
+            log_error(parameters["logger"], f"Index {idx} not found in reference_truths.")
+        reference_truth = reference_truths[idx]
+        candidate_truth = candidate_truths[idx]
+        for layer in candidate_truth:
+            if layer not in reference_truth:
+                parameters["logger"].warn(f"Layer {layer} not found in reference_truth.")
+                continue
+            reference_truth_layer = reference_truth[layer]
+            candidate_truth_layer = candidate_truth[layer]
+            cosine_sim = np.dot(reference_truth_layer, candidate_truth_layer) / (np.linalg.norm(reference_truth_layer) * np.linalg.norm(candidate_truth_layer))
+            data.append([layer, cosine_sim, "Success"])
+
+    for idx in tqdm(candidate_falses, desc="Computing Cosine Similarity", total=len(candidate_falses)):
+        if idx not in reference_truths:
+            log_error(parameters["logger"], f"Index {idx} not found in reference_truths.")
+        reference_truth = reference_truths[idx]
+        candidate_false = candidate_falses[idx]
+        for layer in candidate_false:
+            if layer not in reference_truth:
+                parameters["logger"].warn(f"Layer {layer} not found in reference_truth.")
+                continue
+            reference_truth_layer = reference_truth[layer]
+            candidate_false_layer = candidate_false[layer]
+            cosine_sim = np.dot(reference_truth_layer, candidate_false_layer) / (np.linalg.norm(reference_truth_layer) * np.linalg.norm(candidate_false_layer))
+            data.append([layer, cosine_sim, "Failure"])
+    data_df = pd.DataFrame(data, columns=columns)
+    data_df["Layer Index"] = data_df["Layer Index"].astype(int)
+    sns.lineplot(data=data_df, x="Layer Index", y="Cosine Similarity", hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="sd")
+    plt.title("")
+    plt.legend()
+    show(save_name, parameters)
+    return
 
 
     

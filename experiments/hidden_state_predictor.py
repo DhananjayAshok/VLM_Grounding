@@ -16,25 +16,26 @@ from experiments.grounding_utils.common import VocabProjectionTracking
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 
-def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", metric="two_way_inclusion", token_pos="input"):
+
+def get_hidden_states(dataset, model, metric, run_variant, parameters):
     hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
     hidden_tracker.load_checkpoint()
     if hidden_tracker.hidden_states == {}:
         log_error(parameters["logger"], f"Hidden states not found for {dataset} {model} {run_variant}. Please run the model first.")
-        return
     results_df = parameters["results_dir"] + f"/{dataset}/{model}/final_results.csv"
     if not os.path.exists(results_df):
         log_error(parameters["logger"], f"Results file not found at {results_df}. Please run the model first.")
-        return
     results_df = pd.read_csv(results_df)
     label_col = f"{metric}_{run_variant}_response"
     if label_col not in results_df.columns:
         log_error(parameters["logger"], f"Label column {label_col} not found in results_df with columns {results_df.columns}.")
-        return
     nonnans = results_df[results_df[label_col].notna()]
     if len(nonnans) == 0:
         log_error(parameters["logger"], f"No non-nan values found in {label_col}.")
-        return
+    return nonnans, hidden_tracker, label_col
+
+def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", metric="two_way_inclusion", token_pos="input"):
+    nonnans, hidden_tracker, label_col = get_hidden_states(dataset, model, metric, run_variant, parameters)
     # get the idx's of the non-nan values
     idxs = nonnans.index.tolist()
     # hidden_tracker.hidden_states format is {idx: {layer: hidden_state}}
