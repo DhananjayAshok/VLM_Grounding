@@ -125,7 +125,7 @@ class DataCreator():
         return f"Identify the object in the image. \nAnswer: "
 
     
-    def validate_classes(self, vlm_name="llava-v1.6-vicuna-13b-hf", validation_threshold=0.2, limited_sample_warning=10):
+    def validate_classes(self, vlm_name="llava-v1.6-vicuna-13b-hf", validation_threshold=0.2, limited_sample_warning=10, verbose=False):
         """
         Uses a VLM to judge whether the class can be identified from the images in the dataset. 
         If less than validation_threshold of the images are identified correctly, the class is not validated.
@@ -142,6 +142,8 @@ class DataCreator():
         vlm = get_vlm(vlm_name)
         class_samples = self.get_class_samples(n_samples=10)
         self.validated_classes = []
+        if verbose:
+            self.parameters["logger"].info(f"Validating classes for {self.dataset_name} with {vlm_name} in verbose mode. To switch this off you will have to open the python file with this function and switch off verbosity")
         for class_name in tqdm(class_samples):
             identification_prompt = self.get_identification_prefix(class_name)
             success = []
@@ -150,6 +152,7 @@ class DataCreator():
             for sample in tqdm(class_samples[class_name], desc=f"Running validation for class {class_name}"): 
                 response = vlm(sample, identification_prompt)
                 success.append(inclusion(response["text"], class_name))
+                self.parameters["logger"].info(f"Response: {response['text']}, metric judgement: {success[-1]}")
             self.parameters["logger"].info(f"Class {class_name} has success rate {(100*np.mean(success))}% success rate.")
             if np.mean(success) > validation_threshold:
                 self.validated_classes.append(class_name)
