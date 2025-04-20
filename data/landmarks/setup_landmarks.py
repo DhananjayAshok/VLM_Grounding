@@ -42,7 +42,6 @@ class LandmarksCreator(DataCreator):
         images = []
         for sample_ind in label_samples:
             image = self.dset[sample_ind][0]
-            image = Image.open(image)
             images.append(image)
         return images
 
