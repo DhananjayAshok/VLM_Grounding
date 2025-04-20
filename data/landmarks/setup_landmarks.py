@@ -10,8 +10,14 @@ from utils.log_handling import log_error
 def load_landmarks(raw_data_path):
     dset = torchvision.datasets.ImageFolder(root=f"{raw_data_path}/landmark_images", transform=torchvision.transforms.ToTensor())
     labels = [location.replace("_", " ") for location in dset.classes]
-    dset.classes = labels
-
+    classes = dset.classes
+    labels = []
+    for img in dset.imgs:
+        img_path = img[0]
+        class_name = img_path.split("/")[-2]
+        class_name = class_name.replace("_", " ")
+        labels.append(class_name)
+    labels = np.array(labels)
     return dset, labels
 
 class LandmarksCreator(DataCreator):
