@@ -1,10 +1,12 @@
 import torchvision
 import numpy as np
+from PIL import Image
 
 from data.landmarks.label_mapping import label_spaces
 from data.data_creator import DataCreator
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
+
 
 
 def load_landmarks(raw_data_path):
@@ -40,6 +42,7 @@ class LandmarksCreator(DataCreator):
         images = []
         for sample_ind in label_samples:
             image = self.dset[sample_ind][0]
+            image = Image.open(image)
             images.append(image)
-        return images    
+        return images
 

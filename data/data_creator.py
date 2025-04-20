@@ -38,6 +38,13 @@ class DataCreator():
     def get_random_images(self, class_name, n=10):
         """
         Returns a list of at most n random images labelled as class_name
+
+        Args:
+        class_name (str): The class name to get images for
+        n (int): The number of images to get. If there are less than n images, return all of them
+
+        Returns:
+        list: A list of images labelled as class_name, all of which are PIL images
         """
         raise NotImplementedError
     
