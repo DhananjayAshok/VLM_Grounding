@@ -232,6 +232,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
             X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_dataset(X, X_perplexity, y, df)
             prediction_dir = results_dir
             model = Linear()
+            parameters["logger"].info(f"Probes for layer {layer}")
             _, _, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=prediction_dir, parameters=parameters)
             data.append([layer, test_acc])
         data = pd.DataFrame(data, columns=columns)
@@ -248,7 +249,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
             for dataset in datasets:                
                 model = Linear()
                 X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
-                parameters["logger"].info(f"Testing on {dataset} after training on all other datasets.")
+                parameters["logger"].info(f"Testing on {dataset} after training on all other datasets. Layer {layer}")
                 _, _, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
                 data.append([layer, dataset, test_acc])
             X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
