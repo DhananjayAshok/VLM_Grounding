@@ -31,7 +31,7 @@ def identify_layers(dataset, model, run_variant, parameters):
         if layer not in layers:
             layers.append(int(layer))
     layers.sort()
-    return layers
+    return list(set(layers))
 
 def get_hidden_states(dataset, model, metric, run_variant, parameters):
     hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
