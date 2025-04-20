@@ -287,6 +287,7 @@ class DataCreator():
                 build_dict["correct_option"] = num_to_alph(answer_index)
                 build_dict["options"] = options
             build_dict.update({"question": qa_string, "answer": answer, "source": source})
+            qa_strings.append(build_dict)
         return qa_strings
     
 
