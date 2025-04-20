@@ -225,7 +225,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
         parameters["logger"].info(f"Only one dataset {datasets[0]} found. Using that for training and testing.")
         columns = ["Layer", "Test Accuracy"]
         data = []
-        results_dir_parent = f"/{dataset}/{vlm}/hidden_states/{run_variant}/"
+        results_dir_parent = parameters['results_dir'] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/"
         for layer in layers_to_do:
             results_dir = results_dir_parent + f"/layer_{layer}"
             X, X_perplexity, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
@@ -235,7 +235,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
             _, _, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=prediction_dir, parameters=parameters)
             data.append([layer, test_acc])
         data = pd.DataFrame(data, columns=columns)
-        data.to_csv(results_dir + "/results.csv", index=False)
+        data.to_csv(results_dir + "/iid_results.csv", index=False)
     else:
         parameters["logger"].info(f"Multiple datasets found {datasets}. Conducting OOD experiment and saving a single weight when trained on all.")
         xydfs = {}
@@ -260,7 +260,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
         results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/"
         for dataset in datasets:
             subdf = data[data["Dataset"] == dataset].reset_index(drop=True)
-            subdf.to_csv(results_dir + f"/results.csv", index=False)
+            subdf.to_csv(results_dir + f"/ood_results.csv", index=False)
         return 
 
 if __name__ == "__main__":
