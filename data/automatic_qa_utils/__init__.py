@@ -94,9 +94,6 @@ def handle_mcq_question_generation(parameters, dataset_name, weak_llm):
     return
 
 
-
-
-
 @click.command()
 @click.option("--dataset_name", type=str, help="The name of the dataset to use")
 @click.option("--strong_llm", type=str, help="The name of the strong LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
@@ -157,15 +154,3 @@ def full_qa_pipeline(parameters, dataset_name, llm, do_mcq):
     if do_mcq:
         handle_mcq_question_generation(parameters, dataset_name, llm)
     
-
-
-
-
-
-
-
-
-
-
-
-
