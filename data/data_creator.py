@@ -272,7 +272,8 @@ class DataCreator():
         for qa in class_qas:
             qa_string = qa["question"]
             answer = qa["answer"]
-            source = qa["source"]            
+            source = qa["source"]        
+            build_dict = {}
             if "options" not in qa:
                 qa_string = qa_string + "\nAnswer: "
             else:
@@ -283,7 +284,9 @@ class DataCreator():
                 for i, option in enumerate(options):
                     qa_string = qa_string + f"\n{num_to_alph(i)}: {option}"
                 qa_string = qa_string + "\nAnswer: "
-            qa_strings.append({"question": qa_string, "answer": answer, "source": source})
+                build_dict["correct_option"] = num_to_alph(answer_index)
+                build_dict["options"] = options
+            build_dict.update({"question": qa_string, "answer": answer, "source": source})
         return qa_strings
     
 
@@ -303,7 +306,7 @@ class DataCreator():
         if not os.path.exists(image_path):
             os.makedirs(image_path)  
         # saves a csv with columns: class_name, question_str, answer_str, question_source
-        columns = ["class_name", "question_str", "answer_str", "question_source", "image_path"]
+        columns = ["class_name", "question_str", "answer_str", "question_source", "image_path", "correct_option", "mcq_answer"]
         data = []
         n_classes = len(self.validated_classes) 
         failed_classes = []
@@ -328,10 +331,16 @@ class DataCreator():
                 question = qa["question"]
                 answer = qa["answer"]
                 source = qa["source"]
+                if "correct_option" in qa:
+                    correct_option = qa["correct_option"]
+                    mcq_answer = qa["correct_option"] + f": {answer}"
+                else:
+                    correct_option = None
+                    mcq_answer = None
                 image_samples = self.get_random_images(class_name, images_per_question)
                 for image in image_samples:
                     image_file_path = os.path.join(image_path, f"{image_counter}.png")
-                    data.append([class_name, question, answer, source, image_file_path])
+                    data.append([class_name, question, answer, source, image_file_path, correct_option, mcq_answer])
                     image.save(image_file_path)
                     image_counter += 1
         df = pd.DataFrame(data, columns=columns)

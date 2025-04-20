@@ -7,6 +7,17 @@ from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 
 
+def option_correct(candidate, reference):
+    if candidate[0].lower() == reference.lower():
+        return True
+    else:
+        return False
+    
+def mcq_correct(candidate, reference):
+    letter, option = candidate.split(":")
+    letter = letter.strip()
+    option = option.strip()
+    return option_correct(candidate, letter) or two_way_inclusion(candidate, option)
 
 def inclusion(candidate, reference):
     return str(reference).lower().strip() in str(candidate).lower()
@@ -28,6 +39,8 @@ def bleu(candidate, reference):
 metric_map = {
     "inclusion": inclusion,
     "two_way_inclusion": two_way_inclusion,
+    "option_correct": option_correct,
+    "mcq_correct": mcq_correct,
     "exact_match": exact_match,
     "bleu": bleu
 }

@@ -55,6 +55,9 @@ class DataHolder:
         reference_question_str = row["question_str"].replace(str(row["class_name"]), f"the {self.data_creator.object_str} in the image")
         explicit_question = explicit_prefix + " " + reference_question_str
         image_reference_question = question_prefix + " " + reference_question_str
+        if "correct_option" not in row: # because of version changes they may not be a correct_options in the df
+            row["correct_option"] = None
+            row["mcq_answer"] = None
 
         data = {
             "image": image,
@@ -64,7 +67,9 @@ class DataHolder:
             "full_information_question": full_information_question,
             "image_reference_question": image_reference_question,
             "explicit_question": explicit_question,
-            "identification_question": identification_prefix
+            "identification_question": identification_prefix,
+            "correct_option": row["correct_option"],
+            "mcq_answer": row["mcq_answer"]
         }
         return data
     

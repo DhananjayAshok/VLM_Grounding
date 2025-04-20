@@ -32,6 +32,7 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
     Run primary experiment for dataset
     """
     dataset = get_dataset(dataset_name, parameters)
+    mcq = "_mcq" in dataset_name
     if stage != "evaluation":
         if variant == "default":
             vlm = get_vlm(model)
@@ -53,7 +54,11 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
         
     if stage in ["full_information", "all"]:
         filename = do_full_information(dataset, vlm, variant, parameters, checkpoint_every=checkpoint_every)
-        do_checked_evaluation(vlm, filename, "two_way_inclusion", "full_information_response", "answer_str", "full_information_pass", parameters)
+        if not mcq:
+            do_checked_evaluation(vlm, filename, "two_way_inclusion", "full_information_response", "answer_str", "full_information_pass", parameters)
+        else:
+            do_checked_evaluation(vlm, filename, "mcq_correct", "full_information_response", "mcq_answer", "full_information_pass", parameters)
+        
 
     if stage in ["image_reference", "all"]:
         filename = do_image_reference(dataset, vlm, variant, parameters, checkpoint_every=checkpoint_every)
