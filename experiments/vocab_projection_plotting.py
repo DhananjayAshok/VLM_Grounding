@@ -44,11 +44,11 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
         if "full_information" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters)
             hidden_states["full_information"] = (true_hidden, false_hidden)
-            plot_contrast_cosine(hidden_states["image_reference"][0], hidden_states["full_information"][0], hidden_states["full_information"][1], f"{dataset}_{vlm}_cosine_full_information_vs_image_reference", parameters)
+            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}_{vlm}_cosine_full_information_vs_image_reference", parameters)
         if "trivial_black_image_reference" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters)
             hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
-            plot_contrast_cosine(hidden_states["image_reference"][0], hidden_states["trivial_black_image_reference"][0], hidden_states["trivial_black_image_reference"][1], f"{dataset}_{vlm}_cosine_trivial_black_vs_image_reference", parameters)
+            plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}_{vlm}_cosine_trivial_black_vs_image_reference", parameters)
     return 
 
 
