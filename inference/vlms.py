@@ -132,7 +132,7 @@ class LlaVaInference(HuggingFaceInference):
             self.layers_to_track = layers_to_track
         
 
-    def __call__(self, image, text):
+    def __call__(self, image, text, max_new_tokens=10):
         conversation = [
             {
               "role": "user",
@@ -144,7 +144,7 @@ class LlaVaInference(HuggingFaceInference):
         ]
         prompt = self.processor.apply_chat_template(conversation, add_generation_prompt=True)
         inputs = self.processor(images=[image], text=prompt, return_tensors="pt").to(self.model.device)
-        return self.generate(inputs, max_new_tokens=10)
+        return self.generate(inputs, max_new_tokens=max_new_tokens)
     
     def __str__(self):
         return f"{self.variant}"
@@ -206,10 +206,10 @@ class BLIPInference(HuggingFaceInference):
 
 
 
-    def __call__(self, image, text):
+    def __call__(self, image, text, max_new_tokens=10):
         q_max = self.model.qformer.config.max_position_embeddings  # usually 512
         inputs = self.processor(images=image, text=text, truncation=True, padding="max_length", return_tensors="pt", max_length=q_max).to(self.model.device)
-        return self.generate(inputs, max_new_tokens=10)
+        return self.generate(inputs, max_new_tokens=max_new_tokens)
     
     def __str__(self):
         return f"{self.variant}"
@@ -232,13 +232,13 @@ class OpenAIInference:
             return base64.b64encode(image_file.read()).decode("utf-8")
 
     
-    def convert_to_dict_line(self, image_text, max_tokens=10):
+    def convert_to_dict_line(self, image_text, max_new_tokens=10):
         # {"custom_id": "request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "gpt-3.5-turbo-0125", "messages": [{"role": "system", "content": "You are a helpful assistant."},{"role": "user", "content": "Hello world!"}],"max_tokens": 1000}}
         image, text = image_text
         image.save(os.path.join(openai_tmp_file_dir, "tmp_image.jpg"))
         image_base64 = self.encode_image(os.path.join(openai_tmp_file_dir, "tmp_image.jpg"))
         messages = [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}, {"type": "text", "text": text}]}]
-        d = {"method": "POST", "url": "/v1/chat/completions", "body": {"model": self.variant, "messages": messages, "max_tokens": max_tokens}}
+        d = {"method": "POST", "url": "/v1/chat/completions", "body": {"model": self.variant, "messages": messages, "max_tokens": max_new_tokens}}
         return d
     
     def read_batch_results(self, file):
@@ -280,7 +280,7 @@ class OpenAIInference:
             self.parameters['logger'].warning(f"Batch {batch_name} is not completed. Returning None.")
             return None
 
-    def __call__(self, image_texts, batch_name, ids=None):
+    def __call__(self, image_texts, batch_name, ids=None, max_new_tokens=10):
         if os.path.exists(os.path.join(openai_tmp_file_dir, f"id_{batch_name}.txt")):
             self.parameters['logger'].info(f"Batch {batch_name} already exists. Returning results from file.")
             return self.get_batch_results(batch_name)
@@ -292,7 +292,7 @@ class OpenAIInference:
             assert len(image_texts) == len(ids), "Length of image_texts and ids should be the same."
         requests = []
         for i, image_text in enumerate(image_texts):
-            d = self.convert_to_dict_line(image_text)
+            d = self.convert_to_dict_line(image_text, max_new_tokens=max_new_tokens)
             if ids is not None:
                 d["custom_id"] = f"id_{ids[i]}"
             else:

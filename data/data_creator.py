@@ -8,7 +8,7 @@ import pickle
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 from inference.vlms import get_vlm
-from evaluation.metrics import inclusion
+from evaluation.metrics import inclusion, two_way_inclusion
 
 
 alph_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
@@ -150,8 +150,8 @@ class DataCreator():
             if len(class_samples[class_name]) < limited_sample_warning:
                 self.parameters["logger"].warning(f"On dataset {self}, class {class_name} has less than {limited_sample_warning} samples. Validation may not be accurate.")
             for sample in tqdm(class_samples[class_name], desc=f"Running validation for class {class_name}"): 
-                response = vlm(sample, identification_prompt)
-                success.append(inclusion(response["text"], class_name))
+                response = vlm(sample, identification_prompt, max_new_tokens=15)
+                success.append(two_way_inclusion(response["text"], class_name))
                 self.parameters["logger"].info(f"Response: {response['text']}, metric judgement: {success[-1]}")
             self.parameters["logger"].info(f"Class {class_name} has success rate {(100*np.mean(success))}% success rate.")
             if np.mean(success) > validation_threshold:
