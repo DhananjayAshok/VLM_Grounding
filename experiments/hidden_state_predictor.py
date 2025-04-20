@@ -55,19 +55,21 @@ def get_xydfs(dataset, model, layer, parameters, run_variant="image_reference", 
     # get the idx's of the non-nan values
     idxs = nonnans.index.tolist()
     # hidden_tracker.hidden_states format is {idx: {layer: hidden_state}}
+    keep_idxs = []
     X = []
     # first get the ordered list of idx's from the results_df
     for idx in idxs:
         if idx not in hidden_tracker.hidden_states:
-            log_error(parameters["logger"], f"Hidden state for index {idx} not found. Please run the model first.")
+            parameters["logger"].warn(f"Hidden state for index {idx} not found. Please run the model first.")
             continue
         if f"{layer}_last_{token_pos}" not in hidden_tracker.hidden_states[idx]:
             log_error(parameters["logger"], f"Layer {layer} not found in hidden states for {idx} with keys {hidden_tracker.hidden_states[idx].keys()}.")
         X.append(hidden_tracker.hidden_states[idx][f"{layer}_last_{token_pos}"])
+        keep_idxs.append(idx)
     X = np.array(X)
-    y = nonnans[label_col].values.astype(int)
-    X_perplexity = nonnans[f"{run_variant}_response_perplexity"].values.reshape(-1, 1)
-    df = nonnans.reset_index(drop=True)
+    y = nonnans.loc[keep_idxs, label_col].values.astype(int)
+    X_perplexity = nonnans.loc[keep_idxs, f"{run_variant}_response_perplexity"].values.reshape(-1, 1)
+    df = nonnans.loc[keep_idxs].reset_index(drop=True)
     return X, X_perplexity, y, df
 
 
