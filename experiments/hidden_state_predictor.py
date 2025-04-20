@@ -17,6 +17,22 @@ import warnings
 from sklearn.exceptions import ConvergenceWarning
 
 
+def identify_layers(dataset, model, run_variant, parameters):
+    hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
+    hidden_tracker.load_checkpoint()
+    if hidden_tracker.hidden_states == {}:
+        log_error(parameters["logger"], f"Hidden states not found for {dataset} {model} {run_variant}. Please run the model first.")
+    items = hidden_tracker.hidden_states
+    first = list(items.keys())[0]
+    arrays = items[first]
+    layers = []
+    for key in arrays:
+        layer, last, token_pos = key.split("_")
+        if layer not in layers:
+            layers.append(int(layer))
+    layers.sort()
+    return layers
+
 def get_hidden_states(dataset, model, metric, run_variant, parameters):
     hidden_tracker = HiddenStateTracking(dataset, model, run_variant, parameters)
     hidden_tracker.load_checkpoint()
@@ -188,37 +204,62 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
 @click.command()
 @click.option("--datasets", multiple=True, required=True)
 @click.option("--vlm", default="llava-v1.6-vicuna-7b-hf", type=click.Choice(["llava-v1.6-mistral-7b-hf", "llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"]), help="The model whose hidden states to use")
-@click.option('--layer', type=int, default=16, help='The layer of the model to use')
+@click.option('--layer', type=int, default=None, help='The layer of the model to use')
 @click.option("--run_variant", type=click.Choice(["identification","image_reference", "full_information", "trivial_black"]), default="image_reference", help="The variant of the prompt to use")
 @click.option("--metric", type=click.Choice(["two_way_inclusion", "exact_match"]), default="two_way_inclusion", help="The metric to use as the label")
 @click.option("--token_pos", type=click.Choice(["input", "output"]), default="output", help="The position of the token to use")
 @click.pass_obj
 def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, metric, token_pos):
     np.random.seed(parameters["random_seed"])
+    available_layers = identify_layers(datasets[0], vlm, run_variant, parameters)
+    if layer is not None and layer not in available_layers:
+        log_error(parameters["logger"], f"Layer {layer} not found in available layers {available_layers}.")
+    if layer is not None:
+        layers_to_do = [layer]
+    else:
+        layers_to_do = available_layers
     if len(datasets) == 1:
         dataset = datasets[0]
         parameters["logger"].info(f"Only one dataset {datasets[0]} found. Using that for training and testing.")
-        results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/layer_{layer}"
-        X, X_perplexity, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
-        X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_dataset(X, X_perplexity, y, df)
-        prediction_dir = results_dir
-        model = Linear()
-        do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=prediction_dir, parameters=parameters)
+        columns = ["Layer", "Test Accuracy"]
+        data = []
+        results_dir_parent = f"/{dataset}/{vlm}/hidden_states/{run_variant}/"
+        for layer in layers_to_do:
+            results_dir = results_dir_parent + f"/layer_{layer}"
+            X, X_perplexity, y, df = get_xydfs(datasets[0], vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
+            X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_dataset(X, X_perplexity, y, df)
+            prediction_dir = results_dir
+            model = Linear()
+            _, _, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=prediction_dir, parameters=parameters)
+            data.append([layer, test_acc])
+        data = pd.DataFrame(data, columns=columns)
+        data.to_csv(results_dir + "/results.csv", index=False)
     else:
         parameters["logger"].info(f"Multiple datasets found {datasets}. Conducting OOD experiment and saving a single weight when trained on all.")
         xydfs = {}
-        for dataset in datasets:
-            X, X_perplexity, y, df = get_xydfs(dataset, vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
-            xydfs[dataset] = {"X": X, "y": y, "df": df, "X_perplexity": X_perplexity}
-        for dataset in datasets:
+        columns = ["Layer", "Dataset", "Test Accuracy"]
+        data = []
+        for layer in layers_to_do:            
+            for dataset in datasets:
+                X, X_perplexity, y, df = get_xydfs(dataset, vlm, layer, parameters, run_variant=run_variant, metric=metric, token_pos=token_pos)
+                xydfs[dataset] = {"X": X, "y": y, "df": df, "X_perplexity": X_perplexity}
+            for dataset in datasets:                
+                model = Linear()
+                X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
+                parameters["logger"].info(f"Testing on {dataset} after training on all other datasets.")
+                _, _, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
+                data.append([layer, dataset, test_acc])
+            X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
+            results_dir = parameters["results_dir"] + f"/all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
             model = Linear()
-            X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
-            parameters["logger"].info(f"Testing on {dataset} after training on all other datasets.")
-            do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
-        X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
-        results_dir = parameters["results_dir"] + f"/all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
-        model = Linear()
-        do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=results_dir, parameters=parameters)
+            do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=results_dir, parameters=parameters)
+
+        data = pd.DataFrame(data, columns=columns)
+        results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/"
+        for dataset in datasets:
+            subdf = data[data["Dataset"] == dataset].reset_index(drop=True)
+            subdf.to_csv(results_dir + f"/results.csv", index=False)
+        return 
 
 if __name__ == "__main__":
     fit_hidden_state_predictor()
