@@ -209,7 +209,7 @@ class BLIPInference(HuggingFaceInference):
     def __call__(self, image, text):
         q_max = self.model.qformer.config.max_position_embeddings  # usually 512
         inputs = self.processor(images=image, text=text, truncation=True, padding="max_length", return_tensors="pt", max_length=q_max).to(self.model.device)
-        return self.generate(inputs, max_new_tokens=100)
+        return self.generate(inputs, max_new_tokens=10)
     
     def __str__(self):
         return f"{self.variant}"
