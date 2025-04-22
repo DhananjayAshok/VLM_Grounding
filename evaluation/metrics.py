@@ -14,7 +14,12 @@ def option_correct(candidate, reference):
         return False
     
 def mcq_correct(candidate, reference):
-    letter, option = candidate.split(":")
+    lcount = candidate.count(":")
+    if lcount != 0:
+        letter = candidate[0].lower()
+        option = ""
+    else:
+        letter, option = candidate.split(":")        
     letter = letter.strip()
     option = option.strip()
     return option_correct(candidate, letter) or two_way_inclusion(candidate, option)
