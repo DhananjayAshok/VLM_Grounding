@@ -15,7 +15,7 @@ def option_correct(candidate, reference):
     
 def mcq_correct(candidate, reference):
     lcount = candidate.count(":")
-    if lcount != 0:
+    if lcount != 1:
         letter = candidate[0].lower()
         option = ""
     else:
