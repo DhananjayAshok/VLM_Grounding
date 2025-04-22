@@ -73,6 +73,6 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
         df = do_final_evaluation(df, parameters, mcq=mcq)
         filename = filename.replace("trivial_results.csv", "final_results.csv")
         df.to_csv(filename, index=False)
-        log_final_evaluation(df, parameters, mcq=mcq)
+        log_final_evaluation(df, parameters)
 
 
