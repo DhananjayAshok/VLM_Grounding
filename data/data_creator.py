@@ -307,7 +307,7 @@ class DataCreator():
         if not os.path.exists(image_path):
             os.makedirs(image_path)  
         # saves a csv with columns: class_name, question_str, answer_str, question_source
-        columns = ["class_name", "question_str", "answer_str", "question_source", "image_path", "correct_option", "mcq_answer"]
+        columns = ["class_name", "question_id", "question_str", "answer_str", "question_source", "image_path", "correct_option", "mcq_answer"]
         data = []
         n_classes = len(self.validated_classes) 
         failed_classes = []
@@ -322,6 +322,7 @@ class DataCreator():
             log_error(parameters["logger"], f"All classes have failed. Please check the validation process.")
         target_datapoints_per_class = (target_datapoints // real_n_classes) + 1
         image_counter = 0
+        question_id = 0
         for class_name in tqdm(self.validated_classes):
             qa_strings = self.get_qa_strings(class_name)
             n_questions = len(qa_strings)
@@ -341,9 +342,10 @@ class DataCreator():
                 image_samples = self.get_random_images(class_name, images_per_question)
                 for image in image_samples:
                     image_file_path = os.path.join(image_path, f"{image_counter}.png")
-                    data.append([class_name, question, answer, source, image_file_path, correct_option, mcq_answer])
+                    data.append([class_name, question_id, question, answer, source, image_file_path, correct_option, mcq_answer])
                     image.save(image_file_path)
                     image_counter += 1
+                question_id += 1
         df = pd.DataFrame(data, columns=columns)
         df.to_csv(os.path.join(dataset_path, "data.csv"), index=False)
 

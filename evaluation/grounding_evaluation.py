@@ -53,7 +53,7 @@ def log_final_evaluation(df, parameters, okvqa=False):
                 candidate_cols.append(f"trivial_{trivial}_{variant}")
     else:
         candidate_cols = ["image_reference_response"]
-    for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match"]:
+    for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match", "mcq_correct"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
