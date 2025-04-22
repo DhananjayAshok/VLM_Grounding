@@ -70,7 +70,6 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
     if stage in ["evaluation", "all"]:
         filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
         df = pd.read_csv(filename)
-        mcq = "_mcq" in dataset_name
         df = do_final_evaluation(df, parameters, mcq=mcq)
         filename = filename.replace("trivial_results.csv", "final_results.csv")
         df.to_csv(filename, index=False)
