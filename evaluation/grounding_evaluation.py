@@ -6,9 +6,9 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     reference_column = "answer_str"
     if not okvqa:
         variants = ["full_information", "image_reference"]
-        for trivial in ["black", "white", "noise"]:
-            variants.append(f"trivial_{trivial}_full_information")
-            variants.append(f"trivial_{trivial}_image_reference")
+        for variant in variants:
+            candidate_column.append(f"{variant}_response")
+            candidate_column.append(f"trivial_{variant}_response")
         candidate_columns = [f"{variant}_response" for variant in variants]
     else:
         candidate_columns = ["image_reference_response"]
@@ -22,19 +22,6 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
             df = df_compute_metric_str(metric, df, candidate_column, give_ref, output_column=output_column, save=False, parameters=parameters, verbose=verbose)
     if okvqa:
         return df
-    for metric in metrics:
-        for variant in ["full_information", "image_reference"]:
-            output_columns = []
-            for trivial in ["black", "white", "noise"]:
-                candidate_column = f"trivial_{trivial}_{variant}_response"
-                output_column = f"{metric}_{candidate_column}"
-                output_columns.append(output_column)
-            # take the min over these columns
-            df[f"{metric}_trivial_min_{variant}_response"] = df[output_columns].min(axis=1)
-            # take the max over these columns
-            df[f"{metric}_trivial_max_{variant}_response"] = df[output_columns].max(axis=1)
-            # take the mean over these columns
-            df[f"{metric}_trivial_mean_{variant}_response"] = df[output_columns].mean(axis=1)
     return df
 
 
@@ -47,15 +34,22 @@ def log_final_evaluation(df, parameters, okvqa=False):
     if not okvqa:
         response_cols = ["full_information_response", "image_reference_response"]
         candidate_cols = response_cols.copy()
-        trivials = ["min", "max"]
-        for trivial in trivials:
-            for variant in response_cols:
-                candidate_cols.append(f"trivial_{trivial}_{variant}")
+        for variant in response_cols:
+            candidate_cols.append(f"trivial_{variant}")
     else:
         candidate_cols = ["image_reference_response"]
     for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match", "mcq_correct"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
+            response_col = f"{candidate_col}_response"
             if column in df.columns:
-                nonnan = df[df["image_reference_response"].notna()]
+                nonnan = df[df[response_col].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
+                if "trivial" not in candidate_col:
+                    trivialmax_column = f"{log_metric}_trivial_{candidate_col}"
+                    if trivialmax_column in df.columns:
+                        nonan_slice = df[df[response_col].notna() & (df[trivialmax_column] == False)]
+                        if len(nonan_slice) > 0:
+                            logger.info(f"{column} with trivial successes removed: {nonan_slice[column].mean()}")
+                        else:
+                            logger.info(f"{column} with trivial successes removed: No remaining entries")

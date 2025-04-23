@@ -10,18 +10,20 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
         results_df = pd.read_csv(results_df_path)
         return results_df
     else:
-        prev_runs = {"identification": None, "full_information": "identification_results_evaluated", 
-                     "image_reference": "full_information_results_evaluated", "trivial_full_information": "image_reference_results",
-                     "trivial_image_reference": "trivial_full_information_results"}
+        prev_files = {"identification": None, "full_information": "identification", 
+                     "image_reference": "full_information", "trivial_full_information": "image_reference",
+                     "trivial_image_reference": "trivial_full_information"}
+        prev_run = "identification" if run_variant == "full_information" else "full_information"
+        suffix = "_results_evaluated" if run_variant in ["full_information", "image_reference"] else "_results"
         if run_variant == "identification":
             results_df = dataset.data_df.copy()
             results_df[f"{run_variant}_complete"] = False
         else:
-            results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/{prev_runs[run_variant]}.csv"
+            results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/{prev_files[run_variant]}{suffix}.csv"
             if os.path.exists(results_path):
                 results_df = pd.read_csv(results_path)
                 results_df[f"{run_variant}_complete"] = True
-                pass_row_idx = results_df[results_df[f"{prev_runs[run_variant]}_pass"] == True].index
+                pass_row_idx = results_df[results_df[f"{prev_run}_pass"] == True].index
                 results_df.loc[pass_row_idx, f"{run_variant}_complete"] = False
             else:
                 log_error(parameters["logger"], f"Tried looking for prerequisite file: {results_path} but it does not exist. Please run the prerequisite script first. Will be either generation + eval or just generation")
