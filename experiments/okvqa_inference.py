@@ -12,7 +12,7 @@ from PIL import Image
 
 
 okvqa_input_prompt = "Answer the questions with a short response. Do not state the name of the object in the image. \nWhat are swords made of?\nAnswer: steel [STOP]\n What is the capital of France?\nAnswer: Paris [STOP]\n"
-
+okvqa_cot_input_prompt = "First identify the object in the image, then answer the question. "
 
 def process_okvqa(parameters):
     """
@@ -62,24 +62,32 @@ def process_okvqa(parameters):
     parameters["logger"].info(f"Processed OKVQA dataset and saved to {os.path.join(parameters['storage_dir'], 'processed_datasets', 'okvqa', 'data.csv')}")
     return
 
-def run_okvqa(parameters, vlm):
+def run_okvqa(parameters, vlm, cot=False):
     """
     Run the inference on the OKVQA dataset using the specified VLM.
     """
     #Must save the results to a csv file with a format that the hidden_state_predictor script can read. 
     okvqa_path = os.path.join(parameters["storage_dir"], "processed_datasets", "okvqa")
     data_path = os.path.join(okvqa_path, "data.csv")
-    results_path = parameters["results_dir"] + f"/okvqa/{vlm}/final_results.csv"
+    results_file = f"/okvqa/{vlm}/final_results.csv" if not cot else f"/okvqa/{vlm}/final_results_cot.csv"
+    results_path = parameters["results_dir"] + results_file
     if os.path.exists(results_path):
         parameters["logger"].warning(f"Results file already exists at {results_path}. Please delete it first to regenerate.")
         return
     if not os.path.exists(os.path.dirname(results_path)):
         os.makedirs(os.path.dirname(results_path))
     data_df = pd.read_csv(data_path)
-    hidden_state_tracker = HiddenStateTracking("okvqa", vlm, "image_reference", parameters)
+    if not cot:
+        hidden_state_tracker = HiddenStateTracking("okvqa", vlm, "image_reference", parameters)
+    else:
+        hidden_state_tracker = None
     for idx, row in tqdm(data_df.iterrows(), total=len(data_df), desc="Running OKVQA Inference"):
         image_path = row["image_path"]
-        question = okvqa_input_prompt + "\n" + row["question"] + "\nAnswer: "
+        question_part = "\n" + row["question"] + "\nAnswer: "
+        if not cot:
+            question = okvqa_input_prompt + question_part
+        else:
+            question = okvqa_cot_input_prompt + question_part
         image = Image.open(image_path)
         response = vlm(image, question)
         update_row(data_df, idx, "image_reference", response, completed=True, hidden_state_tracker=hidden_state_tracker, projection_tracker=None)
@@ -98,13 +106,14 @@ def setup_okvqa(parameters):
 
 @click.command()
 @click.option("--model", default="llava-v1.6-vicuna-7b-hf",help="The VLM whose grounding ability is being tested", type=click.Choice(["llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "llava-v1.6-mistral-7b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b"]))
+@click.option("--cot", is_flag=True, default=False, help="Use Chain of Thought (CoT) prompting")
 @click.pass_obj
-def okvqa_inference(parameters, model):
+def okvqa_inference(parameters, model, cot):
     """
     Run inference on the OKVQA dataset using the specified VLM.
     """
-    vlm = get_vlm(model, hidden_state_tracking_mode=True, vocab_projection_mode=False)
-    run_okvqa(parameters, vlm)
+    vlm = get_vlm(model, hidden_state_tracking_mode=not cot, vocab_projection_mode=False)
+    run_okvqa(parameters, vlm, cot)
 
 
 @click.command()
