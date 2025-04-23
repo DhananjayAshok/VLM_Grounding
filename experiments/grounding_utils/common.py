@@ -10,24 +10,21 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
         results_df = pd.read_csv(results_df_path)
         return results_df
     else:
-        prev_runs = {"identification": None, "full_information": "identification", 
-                     "image_reference": "full_information", "trivial_full_information": "image_reference",
+        prev_runs = {"identification": None, "full_information": "identification_results_evaluated", 
+                     "image_reference": "full_information_results_evaluated", "trivial_full_information": "image_reference",
                      "trivial_image_reference": "trivial_full_information"}
         if run_variant == "identification":
             results_df = dataset.data_df.copy()
             results_df[f"{run_variant}_complete"] = False
         else:
-            results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/{prev_runs[run_variant]}_results_evaluated.csv"
-            un_evaluated_results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/{prev_runs[run_variant]}_results.csv"
+            results_path = parameters["results_dir"] + f"/{dataset}/{vlm}/{prev_runs[run_variant]}.csv"
             if os.path.exists(results_path):
                 results_df = pd.read_csv(results_path)
                 results_df[f"{run_variant}_complete"] = True
                 pass_row_idx = results_df[results_df[f"{prev_runs[run_variant]}_pass"] == True].index
                 results_df.loc[pass_row_idx, f"{run_variant}_complete"] = False
-            elif os.path.exists(un_evaluated_results_path):
-                log_error(parameters["logger"], f"Un-evaluated identification results found for {dataset} and {vlm}. Please evaluate them first.")
             else:
-                log_error(parameters["logger"], f"No identification results found for {dataset} and {vlm}. Please run the identification script first.")
+                log_error(parameters["logger"], f"Tried looking for prerequisite file: {results_path} but it does not exist. Please run the prerequisite script first. Will be either generation + eval or just generation")
         return results_df
 
 
