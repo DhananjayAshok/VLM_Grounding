@@ -11,7 +11,8 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
         return results_df
     else:
         prev_runs = {"identification": None, "full_information": "identification", 
-                     "image_reference": "full_information"}
+                     "image_reference": "full_information", "trivial_full_information": "image_reference",
+                     "trivial_image_reference": "trivial_full_information"}
         if run_variant == "identification":
             results_df = dataset.data_df.copy()
             results_df[f"{run_variant}_complete"] = False
@@ -32,6 +33,9 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
 
 def handle_openai(dataset, vlm, results_df_path, parameters, variant="identification", previous_check=None):
     image_texts = {f"{variant}": []}
+    read_variant = variant
+    if "trivial" in variant:
+        read_variant = variant.split("trivial_")[1]
     results_df = get_starting_df(dataset, vlm, results_df_path, parameters, run_variant=variant)
     if results_df[f"{variant}_complete"].all():
         parameters["logger"].warning(f"{variant} script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
@@ -43,8 +47,11 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
             if not check_bool:
                 continue
         data = dataset[idx]
-        image = data["image"]
-        question = data[f"{variant}_question"]
+        if "trivial" in variant:
+            image = None
+        else:
+            image = data["image"]
+        question = data[f"{read_variant}_question"]
         image_texts[variant].append((image, question))
         indexes.append(idx)
     results = {}

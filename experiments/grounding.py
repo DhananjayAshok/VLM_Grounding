@@ -1,4 +1,4 @@
-from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial
+from experiments.grounding_utils import do_full_information, do_image_reference, do_identification, do_trivial_full_information, do_trivial_image_reference
 from evaluation.grounding_evaluation import do_final_evaluation, log_final_evaluation
 from utils.log_handling import log_error
 import os
@@ -23,7 +23,7 @@ def do_checked_evaluation(vlm, filename, metric_str, candidate_column, reference
 @click.command()
 @click.option("--dataset_name", help="The name of the dataset(s) to use", required=True)
 @click.option("--model", help="The VLM whose grounding ability is being tested", type=click.Choice(["llava-v1.6-vicuna-7b-hf", "llava-v1.6-vicuna-13b-hf", "llava-v1.6-mistral-7b-hf", "instructblip-vicuna-7b", "instructblip-vicuna-13b", "gpt-4o-mini", "gpt-4o"]), required=True)
-@click.option("--stage", help="The stage of the grounding process", default="all", type=click.Choice(["identification", "full_information", "image_reference", "trivial", "evaluation", "all",]))
+@click.option("--stage", help="The stage of the grounding process", default="all", type=click.Choice(["identification", "full_information", "image_reference", "trivial_full_information", "trivial_image_reference", "evaluation", "all",]))
 @click.option("--checkpoint_every", type=float, default=0.1, help="Checkpoint every x percent of the dataset")
 @click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection", "hidden_state_vocab_projection"]), help="The variant of the forward pass, controlling what information is stored.", default="default")
 @click.pass_obj
@@ -59,19 +59,20 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
         else:
             do_checked_evaluation(vlm, filename, "mcq_correct", "full_information_response", "mcq_answer", "full_information_pass", parameters)
         
-
     if stage in ["image_reference", "all"]:
         filename = do_image_reference(dataset, vlm, variant, parameters, checkpoint_every=checkpoint_every)
 
+    if stage in ["trivial_full_information", "all"]:
+        filename = do_trivial_full_information(dataset, vlm, variant, parameters, checkpoint_every=checkpoint_every)
 
-    if stage in ["trivial", "all"]:
-        filename = do_trivial(dataset, vlm, variant, parameters, checkpoint_every=checkpoint_every)
+    if stage in ["trivial_image_reference", "all"]:
+        filename = do_trivial_image_reference(dataset, vlm, variant, parameters, checkpoint_every=checkpoint_every)
 
     if stage in ["evaluation", "all"]:
-        filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
+        filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_image_reference_results.csv"
         df = pd.read_csv(filename)
         df = do_final_evaluation(df, parameters, mcq=mcq)
-        filename = filename.replace("trivial_results.csv", "final_results.csv")
+        filename = filename.replace("trivial_image_reference_results.csv", "final_results.csv")
         df.to_csv(filename, index=False)
         log_final_evaluation(df, parameters)
 
