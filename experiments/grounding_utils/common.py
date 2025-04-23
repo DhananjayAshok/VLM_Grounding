@@ -11,8 +11,8 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
         return results_df
     else:
         prev_runs = {"identification": None, "full_information": "identification_results_evaluated", 
-                     "image_reference": "full_information_results_evaluated", "trivial_full_information": "image_reference",
-                     "trivial_image_reference": "trivial_full_information"}
+                     "image_reference": "full_information_results_evaluated", "trivial_full_information": "image_reference_results",
+                     "trivial_image_reference": "trivial_full_information_results"}
         if run_variant == "identification":
             results_df = dataset.data_df.copy()
             results_df[f"{run_variant}_complete"] = False
