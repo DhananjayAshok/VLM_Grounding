@@ -1,4 +1,4 @@
-from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, InstructBlipProcessor, InstructBlipForConditionalGeneration
+from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration, InstructBlipProcessor, InstructBlipForConditionalGeneration, AutoTokenizer
 from utils.parameter_handling import load_parameters
 from utils.log_handling import log_error
 import torch
@@ -138,12 +138,17 @@ class LlaVaInference(HuggingFaceInference):
               "role": "user",
               "content": [
                   {"type": "text", "text": text},
-                  {"type": "image"},
                 ],
             },
         ]
+        if image is not None:
+            conversation[0]['content'].append({"type": "image"})
         prompt = self.processor.apply_chat_template(conversation, add_generation_prompt=True)
-        inputs = self.processor(images=[image], text=prompt, return_tensors="pt").to(self.model.device)
+        if image is None:
+            images=None
+        else:
+            images = [image]
+        inputs = self.processor(images=images, text=prompt, return_tensors="pt").to(self.model.device)
         return self.generate(inputs, max_new_tokens=max_new_tokens)
     
     def __str__(self):
@@ -157,6 +162,8 @@ class BLIPInference(HuggingFaceInference):
         self.processor = InstructBlipProcessor.from_pretrained(f"Salesforce/{variant}")
         self.model = InstructBlipForConditionalGeneration.from_pretrained(f"Salesforce/{variant}", device_map="auto")
         self.model.eval()
+        subvariant_name = variant.split("-")[1]
+        self.lm_tokenizer = AutoTokenizer.from_pretrained(f"lmsys/{subvariant_name}-v1.5")
         self.vocab_projection_mode = vocab_projection_mode
         self.hidden_state_tracking_mode = hidden_state_tracking_mode
         self.attention_tracking_mode = attention_tracking_mode
@@ -204,12 +211,22 @@ class BLIPInference(HuggingFaceInference):
             return InstructBlipForConditionalGeneration.from_pretrained(f"Salesforce/{variant}", device_map=device_map)
 
 
-
-
     def __call__(self, image, text, max_new_tokens=10):
-        q_max = self.model.qformer.config.max_position_embeddings  # usually 512
-        inputs = self.processor(images=image, text=text, truncation=True, padding="max_length", return_tensors="pt", max_length=q_max).to(self.model.device)
-        return self.generate(inputs, max_new_tokens=max_new_tokens)
+        if image is None:
+            if self.vocab_projection_mode or self.hidden_state_tracking_mode:
+                raise ValueError("Image must be provided for vocab projection and hidden state tracking. Also just don't try this with instructblip but whatever")
+            input_text = self.lm_tokenizer(text, return_tensors="pt").to(self.model.device)
+            text_output = self.model.language_model.generate(**input_text, max_new_tokens=max_new_tokens)
+            output_text = self.lm_tokenizer.decode(text_output[0], skip_special_tokens=True)
+            response = {
+                "text": output_text,
+                "perplexity": None,
+            }
+            return response
+        else:
+            q_max = self.model.qformer.config.max_position_embeddings  # usually 512
+            inputs = self.processor(images=image, text=text, truncation=True, padding="max_length", return_tensors="pt", max_length=q_max).to(self.model.device)
+            return self.generate(inputs, max_new_tokens=max_new_tokens)
     
     def __str__(self):
         return f"{self.variant}"
@@ -235,9 +252,12 @@ class OpenAIInference:
     def convert_to_dict_line(self, image_text, max_new_tokens=10):
         # {"custom_id": "request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "gpt-3.5-turbo-0125", "messages": [{"role": "system", "content": "You are a helpful assistant."},{"role": "user", "content": "Hello world!"}],"max_tokens": 1000}}
         image, text = image_text
-        image.save(os.path.join(openai_tmp_file_dir, "tmp_image.jpg"))
-        image_base64 = self.encode_image(os.path.join(openai_tmp_file_dir, "tmp_image.jpg"))
-        messages = [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}, {"type": "text", "text": text}]}]
+        if image is not None:
+            image.save(os.path.join(openai_tmp_file_dir, "tmp_image.jpg"))
+            image_base64 = self.encode_image(os.path.join(openai_tmp_file_dir, "tmp_image.jpg"))
+            messages = [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}, {"type": "text", "text": text}]}]
+        else:
+            messages = [{"role": "user", "content": [{"type": "text", "text": text}]}]
         d = {"method": "POST", "url": "/v1/chat/completions", "body": {"model": self.variant, "messages": messages, "max_tokens": max_new_tokens}}
         return d
     
