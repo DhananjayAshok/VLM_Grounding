@@ -34,12 +34,14 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     for metric in metrics:
         for variant in ["full_information", "image_reference"]:
             output_columns = []
+            candidate_columns = []
             for trivial in all_trivials:
                 candidate_column = f"trivial_{trivial}_{variant}_response"
+                candidate_columns.append(candidate_column)
                 output_column = f"{metric}_{candidate_column}"
                 output_columns.append(output_column)
             # take the min over these columns
-            df[f"trivial_mode_{variant}_response"] = df[output_columns].apply(column_mode, axis=1)
+            df[f"trivial_mode_{variant}_response"] = df[candidate_columns].apply(column_mode, axis=1)
             give_ref = reference_column if metric != "mcq_correct" else "mcq_answer"
             df = df_compute_metric_str(metric, df, f"trivial_mode_{variant}_response", give_ref, output_column=f"{metric}_trivial_mode_{variant}_response", save=False, parameters=parameters, verbose=verbose)
             df[f"{metric}_trivial_min_{variant}_response"] = df[output_columns].min(axis=1)
