@@ -8,7 +8,7 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
         variants = ["full_information", "image_reference"]
         candidate_columns = variants.copy()
         for variant in variants:
-            candidate_column.append(f"trivial_{variant}_response")
+            candidate_columns.append(f"trivial_{variant}_response")
     else:
         candidate_columns = ["image_reference_response"]
     metrics = ["inclusion", "two_way_inclusion", "exact_match", "bleu"]
