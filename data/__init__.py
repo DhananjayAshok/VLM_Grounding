@@ -19,16 +19,16 @@ def validate_classes(parameters, dataset_names, validation_vlm, validation_thres
 @click.command()
 @click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])
 @click.option('--target_datapoints', type=int, default=1000, help='The number of datapoints to aim for in the dataset (lower bound, will overshoot).')
-@click.option("--skip_mcq", default=True, help="Skip MCQ generation")
+@click.option("--do_mcq", default=True, help="Do MCQ generation")
 @click.pass_obj
-def setup_data(parameters, dataset_names, target_datapoints, skip_mcq):
+def setup_data(parameters, dataset_names, target_datapoints, do_mcq):
     """
     Set up datasets for use in experiments
     """
     for dataset_name in dataset_names:
         creator = get_data_creator(dataset_name, parameters=parameters)
         creator.create_validated_data(target_datapoints=target_datapoints)
-        if not skip_mcq and dataset_name not in ["mnist"]: # some datasets are not supported for MCQ
+        if do_mcq and dataset_name not in ["mnist"]: # some datasets are not supported for MCQ
             creator = get_data_creator(dataset_name, parameters=parameters, mcq=True)
             creator.create_validated_data(target_datapoints=target_datapoints)
 
