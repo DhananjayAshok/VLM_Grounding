@@ -141,7 +141,7 @@ def generate_mcq_questions(parameters, dataset_name, weak_llm):
 @click.command()
 @click.option("--dataset_name", type=str, help="The name of the dataset to use")
 @click.option("--llm", type=str, help="The name of the LLM to use", default="meta-llama/Meta-Llama-3.1-8B-Instruct")
-@click.option("--do_mcq", default=False, type=bool, help="Whether to generate MCQAs or not")
+@click.option("--do_mcq", default=True, type=bool, help="Whether to generate MCQAs or not")
 @click.pass_obj
 def full_qa_pipeline(parameters, dataset_name, llm, do_mcq):
     """
