@@ -279,13 +279,16 @@ class DataCreator():
             else:
                 qa_string = qa_string + "\nOptions: "
                 options = qa["options"]
-                np.random.shuffle(options)
-                answer_index = options.index(answer)
+                other_options = [option for option in options if option != answer]
+                np.random.shuffle(other_options)
+                n_options = len(options)
+                answer_index = np.random.randint(0, n_options)
+                other_options.insert(answer_index, answer)
                 for i, option in enumerate(options):
                     qa_string = qa_string + f"\n{num_to_alph(i)}: {option}"
                 qa_string = qa_string + "\nAnswer: "
                 build_dict["correct_option"] = num_to_alph(answer_index)
-                build_dict["options"] = options
+                build_dict["options"] = other_options
             build_dict.update({"question": qa_string, "answer": answer, "source": source})
             qa_strings.append(build_dict)
         return qa_strings
