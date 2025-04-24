@@ -25,6 +25,19 @@ def generate_qas(entity_name, llm, parameters=None):
 
     return qas
 
+def generate_qas_from_llm(entity_name, llm, parameters=None): #TODO: Do
+    if parameters is None:
+        parameters = load_parameters()
+    # Generate QAs from the entity name
+    qas = []
+    questions = llm.derive_questions(entity_name) # is a dictionary with keys "question", "answer", "text"
+    for question in questions:
+        question["entity_name"] = entity_name
+        question["status"] = "generated"
+        question["source"] = "LLM"
+        qas.append(question)
+    return qas
+
 def generate_all_qas(entity_list, llm, parameters=None):
     all_qas = []
     for entity_name in tqdm(entity_list, desc="Generating QAs"):
@@ -42,7 +55,7 @@ def generate_mcqas(qas, llm, parameters=None):
     for class_name in tqdm(qas.keys(), desc="Generating MCQAs"):
         mcqas[class_name] = []
         for qa in tqdm(qas[class_name], desc=f"Generating MCQAs for {class_name}", leave=False):
-            if "accepted" not in qa["status"]:
+            if "accepted" not in qa["status"] or "text" not in qa:
                 continue
             text = qa["text"]
             question = qa["question"]
