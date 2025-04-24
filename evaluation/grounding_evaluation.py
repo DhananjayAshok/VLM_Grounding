@@ -40,14 +40,13 @@ def log_final_evaluation(df, parameters, okvqa=False):
     for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match", "mcq_correct"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
-            response_col = f"{candidate_col}_response"
             if column in df.columns:
-                nonnan = df[df[response_col].notna()]
+                nonnan = df[df[candidate_col].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
                 if "trivial" not in candidate_col:
                     trivialmax_column = f"{log_metric}_trivial_{candidate_col}"
                     if trivialmax_column in df.columns:
-                        nonan_slice = df[df[response_col].notna() & (df[trivialmax_column] == False)]
+                        nonan_slice = df[df[candidate_col].notna() & (df[trivialmax_column] == False)]
                         if len(nonan_slice) > 0:
                             logger.info(f"{column} with trivial successes removed: {nonan_slice[column].mean()}")
                         else:
