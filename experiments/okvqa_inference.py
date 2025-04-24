@@ -89,7 +89,7 @@ def run_okvqa(parameters, vlm, cot=False):
         else:
             question = okvqa_cot_input_prompt + question_part
         image = Image.open(image_path)
-        response = vlm(image, question)
+        response = vlm(image, question, max_new_tokens=10 if not cot else 50)
         update_row(data_df, idx, "image_reference", response, completed=True, hidden_state_tracker=hidden_state_tracker, projection_tracker=None)
     save(data_df, results_path, hidden_state_tracker, None)
     parameters["logger"].info(f"OKVQA inference completed and saved to {results_path}")
