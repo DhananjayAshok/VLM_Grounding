@@ -5,7 +5,9 @@ from experiments.grounding_utils.trivial import all_trivials
 
 def column_mode(row):
     columns = row.index
-    cleaned = [row[col].strip() for col in columns]
+    cleaned = [row[col].strip() for col in columns if isinstance(row[col], str)]
+    if len(cleaned) == 0:
+        return None
     mode = max(set(cleaned), key=cleaned.count)
     return mode
 
