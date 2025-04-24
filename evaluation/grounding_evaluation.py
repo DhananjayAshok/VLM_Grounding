@@ -6,10 +6,9 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     reference_column = "answer_str"
     if not okvqa:
         variants = ["full_information", "image_reference"]
+        candidate_columns = variants.copy()
         for variant in variants:
-            candidate_column.append(f"{variant}_response")
             candidate_column.append(f"trivial_{variant}_response")
-        candidate_columns = [f"{variant}_response" for variant in variants]
     else:
         candidate_columns = ["image_reference_response"]
     metrics = ["inclusion", "two_way_inclusion", "exact_match", "bleu"]
