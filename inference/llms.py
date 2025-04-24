@@ -132,7 +132,7 @@ class LMInference:
         if n_other_options <= 2:
             return []
         options = []
-        for i in range(1, len(pieces)):
+        for i in range(0, len(pieces)):
             if "Option" in pieces[i]:
                 option = pieces[i].split(":")[-1].strip()
                 options.append(option)
