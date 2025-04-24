@@ -8,6 +8,8 @@ from PIL import Image
 import random
 from experiments.grounding_utils.common import update_row
 
+all_trivials = ["black", "white", "noise", "none"]
+
 def create_black_image(width, height):
     return Image.new("RGB", (width, height), "black")
 
@@ -44,7 +46,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
     previous_check = "full_information_pass"
     variant = "trivial"
     image_texts = {}
-    for trivial_kind in ["black", "white", "noise"]:
+    for trivial_kind in all_trivials:
         image_texts[f"trivial_{trivial_kind}_full_information"] = []
         image_texts[f"trivial_{trivial_kind}_image_reference"] = []
     results_df = get_starting_df(dataset, vlm, results_df_path, parameters)
@@ -60,7 +62,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
         data = dataset[idx]
         image = data["image"]
         black, white, noise = create_trivial_images(image.width, image.height)
-        for trivial_image, trivial_name in zip([black, white, noise], ["black", "white", "noise"]):
+        for trivial_image, trivial_name in zip([black, white, noise, None], all_trivials):
             image_texts[f"trivial_{trivial_name}_full_information"].append((trivial_image, data["full_information_question"]))
             image_texts[f"trivial_{trivial_name}_image_reference"].append((trivial_image, data["image_reference_question"]))
         indexes.append(idx)
@@ -82,7 +84,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
 
 def save(results_df, results_df_path, full_hidden_state_trackers, full_projection_trackers, image_reference_hidden_state_trackers, image_reference_projection_trackers):
     results_df.to_csv(results_df_path, index=False)
-    for trivial in ["black", "white", "noise"]:
+    for trivial in all_trivials:
             if full_hidden_state_trackers[trivial] is not None:
                 full_hidden_state_trackers[trivial].save_checkpoint()
                 image_reference_hidden_state_trackers[trivial].save_checkpoint()
@@ -112,7 +114,7 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
         full_projection_trackers = {}
         image_reference_hidden_state_trackers = {}
         image_reference_projection_trackers = {}
-        for trivial in ["black", "white", "noise"]:
+        for trivial in all_trivials:
             if "hidden_state" in variant:
                 name = f"trivial_{trivial}_full_information"
                 full_hidden_state_trackers[trivial] = HiddenStateTracking(dataset, vlm, name, parameters)
@@ -144,7 +146,7 @@ def do_trivial(dataset, vlm, variant="default",  parameters=None, checkpoint_eve
                 black, white, noise = create_trivial_images(image.width, image.height)
                 full_information_question = data["full_information_question"]
                 image_reference_question = data["image_reference_question"]
-                for trivial_image, trivial_name in zip([black, white, noise], ["black", "white", "noise"]):
+                for trivial_image, trivial_name in zip([black, white, noise, None], all_trivials):
                     response = vlm(trivial_image, full_information_question)
                     update_row(results_df, idx, f"trivial_{trivial_name}_full_information", response, hidden_state_tracker=full_hidden_state_trackers[trivial_name], projection_tracker=full_projection_trackers[trivial_name], completed=False)
                     response = vlm(trivial_image, image_reference_question)

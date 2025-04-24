@@ -1,14 +1,24 @@
 from utils.log_handling import log_error
 from evaluation.metrics import df_compute_metric_str
+from experiments.grounding_utils.trivial import all_trivials
+
+
+def column_mode(row):
+    columns = row.index
+    cleaned = [row[col].strip() for col in columns]
+    mode = max(set(cleaned), key=cleaned.count)
+    return mode
+
 
 
 def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     reference_column = "answer_str"
     if not okvqa:
-        variants = ["full_information_response", "image_reference_response"]
-        candidate_columns = variants.copy()
-        for variant in variants:
-            candidate_columns.append(f"trivial_{variant}")
+        variants = ["full_information", "image_reference"]
+        for trivial in all_trivials:
+            variants.append(f"trivial_{trivial}_full_information")
+            variants.append(f"trivial_{trivial}_image_reference")
+        candidate_columns = [f"{variant}_response" for variant in variants]
     else:
         candidate_columns = ["image_reference_response"]
     metrics = ["inclusion", "two_way_inclusion", "exact_match", "bleu"]
@@ -21,6 +31,23 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
             df = df_compute_metric_str(metric, df, candidate_column, give_ref, output_column=output_column, save=False, parameters=parameters, verbose=verbose)
     if okvqa:
         return df
+    for metric in metrics:
+        for variant in ["full_information", "image_reference"]:
+            output_columns = []
+            for trivial in all_trivials:
+                candidate_column = f"trivial_{trivial}_{variant}_response"
+                output_column = f"{metric}_{candidate_column}"
+                output_columns.append(output_column)
+            # take the min over these columns
+            df[f"trivial_mode_{variant}_response"] = df[output_columns].apply(column_mode, axis=1)
+            give_ref = reference_column if metric != "mcq_correct" else "mcq_answer"
+            df = df_compute_metric_str(metric, df, f"trivial_mode_{variant}_response", give_ref, output_column=f"{metric}_trivial_mode_{variant}_response", save=False, parameters=parameters, verbose=verbose)
+            df[f"{metric}_trivial_min_{variant}_response"] = df[output_columns].min(axis=1)
+            # take the max over these columns
+            df[f"{metric}_trivial_max_{variant}_response"] = df[output_columns].max(axis=1)
+            # take the mean over these columns
+            df[f"{metric}_trivial_mean_{variant}_response"] = df[output_columns].mean(axis=1)
+
     return df
 
 
@@ -33,21 +60,15 @@ def log_final_evaluation(df, parameters, okvqa=False):
     if not okvqa:
         response_cols = ["full_information_response", "image_reference_response"]
         candidate_cols = response_cols.copy()
-        for variant in response_cols:
-            candidate_cols.append(f"trivial_{variant}")
+        trivials = ["max", "mode"] + all_trivials
+        for trivial in trivials:
+            for variant in response_cols:
+                candidate_cols.append(f"trivial_{trivial}_{variant}")
     else:
         candidate_cols = ["image_reference_response"]
     for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match", "mcq_correct"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
-                nonnan = df[df[candidate_col].notna()]
+                nonnan = df[df["image_reference_response"].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
-                if "trivial_image_reference" not in candidate_col:
-                    trivialmax_column = f"{log_metric}_trivial_image_reference_response"
-                    if trivialmax_column in df.columns:
-                        nonan_slice = df[df[candidate_col].notna() & (df[trivialmax_column] == False)]
-                        if len(nonan_slice) > 0:
-                            logger.info(f"{column} with trivial successes removed: {nonan_slice[column].mean()}")
-                        else:
-                            logger.info(f"{column} with trivial successes removed: No remaining entries")

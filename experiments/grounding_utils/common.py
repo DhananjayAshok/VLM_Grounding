@@ -11,8 +11,7 @@ def get_starting_df(dataset, vlm, results_df_path, parameters, run_variant="iden
         return results_df
     else:
         prev_files = {"identification": None, "full_information": "identification", 
-                     "image_reference": "full_information", "trivial_full_information": "image_reference",
-                     "trivial_image_reference": "trivial_full_information"}
+                     "image_reference": "full_information"}
         prev_run = "identification" if run_variant == "full_information" else "full_information"
         suffix = "_results_evaluated" if run_variant in ["full_information", "image_reference"] else "_results"
         if run_variant == "identification":
