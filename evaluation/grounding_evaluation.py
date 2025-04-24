@@ -5,10 +5,10 @@ from evaluation.metrics import df_compute_metric_str
 def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     reference_column = "answer_str"
     if not okvqa:
-        variants = ["full_information", "image_reference"]
+        variants = ["full_information_response", "image_reference_response"]
         candidate_columns = variants.copy()
         for variant in variants:
-            candidate_columns.append(f"trivial_{variant}_response")
+            candidate_columns.append(f"trivial_{variant}")
     else:
         candidate_columns = ["image_reference_response"]
     metrics = ["inclusion", "two_way_inclusion", "exact_match", "bleu"]
