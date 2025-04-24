@@ -43,8 +43,8 @@ def log_final_evaluation(df, parameters, okvqa=False):
             if column in df.columns:
                 nonnan = df[df[candidate_col].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
-                if "trivial" not in candidate_col:
-                    trivialmax_column = f"{log_metric}_trivial_{candidate_col}"
+                if "trivial_image_reference" not in candidate_col:
+                    trivialmax_column = f"{log_metric}_trivial_image_reference_response"
                     if trivialmax_column in df.columns:
                         nonan_slice = df[df[candidate_col].notna() & (df[trivialmax_column] == False)]
                         if len(nonan_slice) > 0:
