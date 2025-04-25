@@ -68,11 +68,18 @@ def log_final_evaluation(df, parameters, okvqa=False):
         for trivial in trivials:
             for variant in response_cols:
                 candidate_cols.append(f"trivial_{trivial}_{variant}")
+        slice_cols = ["trivial_mode_image_reference_response", "trivial_max_image_reference_response"]
     else:
         candidate_cols = ["image_reference_response"]
+        slice_cols = []
     for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match", "mcq_correct"]:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
                 nonnan = df[df["image_reference_response"].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
+                if column not in slice_cols:
+                    for slice_col in slice_cols:
+                        slice_false = df[df[slice_col] == False]
+                        nonnan = slice_false[slice_false["image_reference_response"].notna()]
+                        logger.info(f"{column} when {slice_col} is False: {nonnan[column].mean()}")
