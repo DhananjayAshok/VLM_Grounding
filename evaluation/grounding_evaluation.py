@@ -80,6 +80,6 @@ def log_final_evaluation(df, parameters, okvqa=False):
                 logger.info(f"{column}: {nonnan[column].mean()}")
                 if column not in slice_cols:
                     for slice_col in slice_cols:
-                        slice_false = df[df[slice_col] == False]
+                        slice_false = df[df[f"{log_metric}_{slice_col}"] == False]
                         nonnan = slice_false[slice_false["image_reference_response"].notna()]
                         logger.info(f"{column} when {slice_col} is False: {nonnan[column].mean()}")
