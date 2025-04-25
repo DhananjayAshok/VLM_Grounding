@@ -22,7 +22,10 @@ def mcq_correct(candidate, reference):
         letter, option = candidate.split(":")        
     letter = letter.strip()
     option = option.strip()
-    return option_correct(candidate, letter) or two_way_inclusion(reference, option)
+
+    reference_letter = reference[0].lower()
+    reference_option = reference.split(":")[1].strip() # if this fails I've made an internal error. 
+    return option_correct(letter, reference_letter) or two_way_inclusion(option, reference_option)
 
 def inclusion(candidate, reference):
     return str(reference).lower().strip() in str(candidate).lower()
