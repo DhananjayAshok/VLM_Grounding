@@ -47,6 +47,8 @@ class LMInference:
             check_strings = ["Question:"]  
         elif self.role in ["question_extraction_mcq"]:
             check_strings = ["Text:", "Question:", "Correct Answer:"]
+        elif self.role in ["wiki_generation"]:
+            check_strings = ["Entity:"]
         for check_string in check_strings:
             if check_string not in text:
                 assert f"{check_string} not found in text {text}. This is needed for the role {self.role}"
@@ -101,6 +103,12 @@ class LMInference:
         self.set_role("question_answering")
         text = f"Question: {question}\nAnswer: "
         return self.parse(self(text))
+    
+    def perform_wiki_generation(self, entity, max_new_tokens=256):
+        assert entity is not None
+        self.set_role("wiki_generation")
+        text = f"Entity: {entity}\nText: "
+        return self.parse(self(text, max_new_tokens=max_new_tokens))
 
     def parse_binary(self, output, true_word="pass", false_word="fail"):
         if true_word in output.lower():
@@ -139,7 +147,7 @@ class LMInference:
         return options
         
     def parse(self, output):
-        if self.role is None:
+        if self.role is None or self.role in ["wiki_generation"]:
             return output.strip()
         if self.role in ["identification", "correctness"]:
             return self.parse_binary(output)
@@ -163,7 +171,9 @@ class LMInference:
         else:
             raise ValueError(f"Role {self.role} not recognized")
 
-    def __call__(self, text):
+    def __call__(self, text, max_new_tokens=None):
+        if max_new_tokens is None:
+            max_new_tokens = self.max_new_tokens
         messages = []
         if self.role is not None:
             self.check_contain(text)
@@ -177,7 +187,7 @@ class LMInference:
         
         outputs = self.pipeline(
             messages,
-            max_new_tokens=self.max_new_tokens, 
+            max_new_tokens=max_new_tokens, 
             pad_token_id=self.tokenizer.eos_token_id,
             do_sample=False,
             temperature=1.0,

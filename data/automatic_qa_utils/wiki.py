@@ -17,7 +17,7 @@ def get_wikipedia_texts(entity_name):
     return split_text(entity_name, text)
     
 
-def split_text(entity_name, text, sentences_per=2):
+def split_text(entity_name, text, sentences_per=2, do_entity_check=True):
     # split into sentences that have entity_name in them
     split_text = text.split("\n\n") # split by section first
     text = []
@@ -34,9 +34,12 @@ def split_text(entity_name, text, sentences_per=2):
         joined_text = []
         for i in range(0, len(options), sentences_per):
             joined_text.append(". ".join(options[i:i+sentences_per]))
-        for option in joined_text:
-            if entity_name.lower() in option.lower():
-                split_text.append(option)
-            else:
-                pass
+        if do_entity_check:
+            for option in joined_text:
+                if entity_name.lower() in option.lower():
+                    split_text.append(option)
+                else:
+                    pass
+        else:
+            split_text.extend(joined_text)
     return split_text

@@ -307,6 +307,28 @@ Judgment: Unique [STOP]
 QA_DUPLICATE_PROMPTS = [QA_DUPLICATE, (QA_DUPLICATE_EXAMPLE_1_Q, QA_DUPLICATE_EXAMPLE_1_A), (QA_DUPLICATE_EXAMPLE_2_Q, QA_DUPLICATE_EXAMPLE_2_A)]
 
 
+WIKI_GENERATION = """
+You are a reliable and knowledgeable system tasked with generating an exhaustive text article with facts about a given entity. The article should be informative and concise.
+"""
+
+WIKI_GENERATION_EXAMPLE_1_Q = """
+Entity: Tench
+"""
+
+WIKI_GENERATION_EXAMPLE_1_A = """
+Text: The tench or doctor fish (Tinca tinca) is a fresh- and brackish-water fish of the order Cypriniformes found throughout Eurasia from Western Europe including Britain and Ireland east into Asia. It normally inhabits slow-moving freshwater habitats, particularly lakes and lowland rivers. The tench was first formally described in as Cyprinus tinca by Carl Linnaeus in 1758. The tench is most often found in still waters with a clay or muddy substrate and abundant vegetation. This species is rare in clear waters across stony substrate, and is absent altogether from fast-flowing streams. It tolerates water with a low oxygen concentration, being found in waters where even the carp cannot survive. Tench feed mostly at night with a preference for animals, such as chironomids, on the bottom of eutrophic waters and snails and pea clams in well-vegetated waters.
+"""
+
+WIKI_GENERATION_EXAMPLE_2_Q = """
+Entity: Baklava
+"""
+
+WIKI_GENERATION_EXAMPLE_2_A = """
+Text: Baklava is a layered pastry dessert made of filo pastry, filled with chopped nuts, and sweetened with syrup or honey. It was one of the most popular sweet pastries of Ottoman cuisine. There are claims attributing baklava to the Assyrians, according to which baklava was prepared by them in the 8th century BC. Many claim that the placenta cake, and therefore likely baklava, derived from a recipe from Ancient Greece. Baklava is usually served at room temperature, and is often garnished with nuts that have been ground up.
+"""
+
+WIKI_GENERATION_PROMPTS = [WIKI_GENERATION, (WIKI_GENERATION_EXAMPLE_1_Q, WIKI_GENERATION_EXAMPLE_1_A), (WIKI_GENERATION_EXAMPLE_2_Q, WIKI_GENERATION_EXAMPLE_2_A)]
+
 
 prompts_dict = {
     "identification_evaluation": IDENTIFICATION_PROMPTS, 
@@ -317,4 +339,5 @@ prompts_dict = {
     "question_duplicate_evaluation": QA_DUPLICATE_PROMPTS,
     "question_answering": QUESTION_ANSWER_PROMPTS,
     "question_answering_mcq": QUESTION_ANSWER_MCQ_PROMPTS,
+    "wiki_generation": WIKI_GENERATION_PROMPTS,
 }
