@@ -226,7 +226,8 @@ def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, s
 
     for idx in tqdm(candidate_falses, desc="Computing Cosine Similarity", total=len(candidate_falses)):
         if idx not in reference_truths:
-            log_error(parameters["logger"], f"Index {idx} not found in reference_truths.")
+            parameters["logger"].warn(f"Index {idx} not found in reference_truths.")
+            continue
         reference_truth = reference_truths[idx]
         candidate_false = candidate_falses[idx]
         for layer in candidate_false:
