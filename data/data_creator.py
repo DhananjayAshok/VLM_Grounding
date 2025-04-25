@@ -284,7 +284,7 @@ class DataCreator():
                 n_options = len(options)
                 answer_index = np.random.randint(0, n_options)
                 other_options.insert(answer_index, answer)
-                for i, option in enumerate(options):
+                for i, option in enumerate(other_options):
                     qa_string = qa_string + f"\n{num_to_alph(i)}: {option}"
                 qa_string = qa_string + "\nAnswer: "
                 build_dict["correct_option"] = num_to_alph(answer_index)
