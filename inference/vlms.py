@@ -101,16 +101,16 @@ class HuggingFaceInference:
             look_for_words = ["object", "image", "entity"]
             default_start_len = len(self.processor.tokenizer.encode(""))
             look_indexes = {}
+            input_ids = inputs["input_ids"][0]
             for kind in look_for_words:
                 if entity is None and kind == "entity":
                     look_for_words["entity"] = None
                     continue
-                word = kind if kind != "entity" else entity
+                word = kind if kind != "entity" else str(entity)
                 encoded_tokens = self.processor.tokenizer.encode(word)[default_start_len:]
-                # get the first token id of the word in the input
-                track_token = encoded_tokens[0]
+                # get the last token id of the word in the input
+                track_token = encoded_tokens[-1] # not really sure about this.
                 # find the index of the first occurance of this in the input:
-                input_ids = inputs["input_ids"][0]
                 index_int = (input_ids == track_token).nonzero(as_tuple=True)[0]
                 if len(index_int) > 0:
                     index = index_int[0].item()
