@@ -38,7 +38,7 @@ def do_full_information(dataset, vlm, variant="default",  parameters=None, check
                 data = dataset[idx]
                 image = data["image"]
                 full_information_question = data["full_information_question"]
-                response = vlm(image, full_information_question)
+                response = vlm(image, full_information_question, entity=data["class_name"])
                 update_row(results_df, idx, "full_information", response, hidden_state_tracker=hidden_state_tracker, projection_tracker=projection_tracker)
                 if idx % checkpoint_every == 0:  # This is okay because its sequential so it won't skip saving once it restarts
                     save(results_df, results_df_path, hidden_state_tracker, projection_tracker)

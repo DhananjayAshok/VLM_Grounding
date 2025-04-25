@@ -55,7 +55,7 @@ def forward_kl(vocab_array):
 
 
 class HuggingFaceInference:    
-    def generate(self, inputs, max_new_tokens=10):
+    def generate(self, inputs, entity=None, max_new_tokens=10):
         input_length = inputs["input_ids"].shape[1]
         output = self.model.generate(**inputs, max_new_tokens=max_new_tokens, pad_token_id=self.model.config.eos_token_id, stop_strings=["[STOP]"], tokenizer=self.processor.tokenizer, output_hidden_states=True, return_dict_in_generate=True, output_scores=True)
         output_tokens = output["sequences"][0, input_length:]
@@ -97,10 +97,34 @@ class HuggingFaceInference:
             response["total_projection"] = probs
             
         if self.hidden_state_tracking_mode:
+            # look for the word object and the entity word in the input (this is from image reference questions is the assumption) and get the vocab distribution for that:
+            look_for_words = ["object", "image", "entity"]
+            default_start_len = len(self.processor.tokenizer.encode(""))
+            look_indexes = {}
+            for kind in look_for_words:
+                if entity is None and kind == "entity":
+                    look_for_words["entity"] = None
+                    continue
+                word = kind if kind != "entity" else entity
+                encoded_tokens = self.processor.tokenizer.encode(word)[default_start_len:]
+                # get the first token id of the word in the input
+                track_token = encoded_tokens[0]
+                # find the index of the first occurance of this in the input:
+                input_ids = inputs["input_ids"][0]
+                index_int = (input_ids == track_token).nonzero(as_tuple=True)[0]
+                if len(index_int) > 0:
+                    index = index_int[0].item()
+                else:
+                    index = None
+                look_indexes[kind] = index
             output_hidden_states = {}
             for i, layer in enumerate(self.layers_to_track):
                 output_hidden_states[f"{layer}_last_input"] = output["hidden_states"][0][layer][0, -1].detach().cpu().numpy()
                 output_hidden_states[f"{layer}_last_output"] = output["hidden_states"][-1][layer][0, -1].detach().cpu().numpy()
+                for kind in look_indexes:
+                    output_hidden_states[f"{layer}_{kind}"] = output["hidden_states"][0][layer][0, look_indexes[kind]].detach().cpu().numpy() # TODO: Need to check this
+                else:
+                    output_hidden_states[f"{layer}_{kind}"] = None
             response["hidden_states"] = output_hidden_states
         elif self.attention_tracking_mode:
             pass
@@ -132,7 +156,7 @@ class LlaVaInference(HuggingFaceInference):
             self.layers_to_track = layers_to_track
         
 
-    def __call__(self, image, text, max_new_tokens=10):
+    def __call__(self, image, text, entity=None, max_new_tokens=10):
         conversation = [
             {
               "role": "user",
@@ -149,7 +173,7 @@ class LlaVaInference(HuggingFaceInference):
         else:
             images = [image]
         inputs = self.processor(images=images, text=prompt, return_tensors="pt").to(self.model.device)
-        return self.generate(inputs, max_new_tokens=max_new_tokens)
+        return self.generate(inputs, entity=entity, max_new_tokens=max_new_tokens)
     
     def __str__(self):
         return f"{self.variant}"
@@ -211,7 +235,7 @@ class BLIPInference(HuggingFaceInference):
             return InstructBlipForConditionalGeneration.from_pretrained(f"Salesforce/{variant}", device_map=device_map)
 
 
-    def __call__(self, image, text, max_new_tokens=10):
+    def __call__(self, image, text, entity=None, max_new_tokens=10):
         if image is None:
             if self.vocab_projection_mode or self.hidden_state_tracking_mode:
                 raise ValueError("Image must be provided for vocab projection and hidden state tracking. Also just don't try this with instructblip but whatever")
@@ -226,7 +250,7 @@ class BLIPInference(HuggingFaceInference):
         else:
             q_max = self.model.qformer.config.max_position_embeddings  # usually 512
             inputs = self.processor(images=image, text=text, truncation=True, padding="max_length", return_tensors="pt", max_length=q_max).to(self.model.device)
-            return self.generate(inputs, max_new_tokens=max_new_tokens)
+            return self.generate(inputs, entity=entity, max_new_tokens=max_new_tokens)
     
     def __str__(self):
         return f"{self.variant}"

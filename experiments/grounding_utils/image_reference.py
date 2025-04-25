@@ -38,7 +38,7 @@ def do_image_reference(dataset, vlm, variant="default",  parameters=None, checkp
                 data = dataset[idx]
                 image = data["image"]
                 image_reference_question = data["image_reference_question"]
-                response = vlm(image, image_reference_question)
+                response = vlm(image, image_reference_question, entity=data["class_name"])
                 update_row(results_df, idx, "image_reference", response, hidden_state_tracker=hidden_state_tracker, projection_tracker=projection_tracker)
                 if idx % checkpoint_every == 0:  # This is okay because its sequential so it won't skip saving once it restarts
                     save(results_df, results_df_path, hidden_state_tracker, projection_tracker)
