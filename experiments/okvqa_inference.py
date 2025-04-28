@@ -12,7 +12,7 @@ from PIL import Image
 
 
 okvqa_input_prompt = "Answer the questions with a short response. Do not state the name of the object in the image. \nWhat are swords made of?\nAnswer: steel [STOP]\n What is the capital of France?\nAnswer: Paris [STOP]\n"
-okvqa_cot_input_prompt = "First identify the object in the image, then answer the question. "
+okvqa_cot_input_prompt = "First identify the object in the image, then answer the question. \nWhat sort of vehicle uses this item?\nAnswer: The item is a fire hydrant. It is used by a firetruck [STOP]\nWhat days might I most commonly go to this building?\nAnswer: The building is a church. You are most likely to go on sunday [STOP]\n"
 
 def process_okvqa(parameters):
     """
