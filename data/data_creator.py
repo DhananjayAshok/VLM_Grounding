@@ -267,6 +267,8 @@ class DataCreator():
         np.random.seed(self.parameters["random_seed"])
         if self.qas is None:
             self.load_qas()
+        if class_name not in self.qas:
+            return []
         class_qas = self.qas[class_name]
         qa_strings = []
         for qa in class_qas:
