@@ -186,7 +186,7 @@ class BLIPInference(HuggingFaceInference):
         self.processor = InstructBlipProcessor.from_pretrained(f"Salesforce/{variant}")
         self.model = InstructBlipForConditionalGeneration.from_pretrained(f"Salesforce/{variant}", device_map="auto")
         self.model.eval()
-        subvariant_name = variant.split("-")[1]
+        subvariant_name = "-".join(variant.split("-")[1:])
         self.lm_tokenizer = AutoTokenizer.from_pretrained(f"lmsys/{subvariant_name}-v1.5")
         self.vocab_projection_mode = vocab_projection_mode
         self.hidden_state_tracking_mode = hidden_state_tracking_mode
