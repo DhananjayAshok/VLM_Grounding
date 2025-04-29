@@ -17,7 +17,7 @@ def mcq_correct(candidate, reference):
     lcount = candidate.count(":")
     if lcount != 1:
         letter = candidate[0].lower()
-        option = ""
+        option = "OPTION NOT OUTPUTTED"
     else:
         letter, option = candidate.split(":")        
     letter = letter.strip()
