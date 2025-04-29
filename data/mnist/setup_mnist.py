@@ -43,7 +43,7 @@ def create_mnist_qas(n_questions_per_class=10, parameters=None):
             d = {
                 "question": question, 
                 "answer": answer, 
-                "status": "approved",
+                "status": "accepted",
                 "source": "manual"
                 }
             qas.append(d)

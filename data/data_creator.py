@@ -204,6 +204,7 @@ class DataCreator():
         else:
             file_exists = os.path.exists(qa_path)
         if not file_exists:
+            parameters["logger"].warning(f"QA pairs for {self.dataset_name} does not exist at {qa_path}.")
             if self.mcq and os.path.exists(qa_path):
                 log_error(parameters["logger"], f"QA pairs for {self.dataset_name} MCQ variant do not exist, but deduplicated data does exist at {qa_path}. Run the generate_mcq_questions command first.")
             else:
