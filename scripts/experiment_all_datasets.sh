@@ -29,6 +29,7 @@ for dataset_name in "${datasets[@]}"; do
     if [[ $vlm == "llava-v1.6-vicuna-7b-hf" ]]; then
         echo "Running hidden state tracking and vocabulary projection too"
         python main.py grounding_experiment --dataset_name $dataset_name --model $vlm --variant hidden_state_vocab_projection
+        python main.py visualize_vocab_projection --dataset $dataset_name
     else
         python main.py grounding_experiment --dataset_name $dataset_name --model $vlm
     fi
