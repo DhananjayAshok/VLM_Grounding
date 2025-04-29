@@ -296,7 +296,7 @@ class DataCreator():
         return qa_strings
     
 
-    def save_data(self, target_datapoints=1000):
+    def save_data(self, target_datapoints=1000, min_images_per_question=5):
         """
         Saves the dataset to the processed_datasets folder
 
@@ -333,7 +333,7 @@ class DataCreator():
             n_questions = len(qa_strings)
             if n_questions == 0:
                 continue
-            images_per_question = (target_datapoints_per_class // n_questions) + 1
+            images_per_question = max((target_datapoints_per_class // n_questions) + 1, min_images_per_question)
             for qa in qa_strings:
                 question = qa["question"]
                 answer = qa["answer"]
