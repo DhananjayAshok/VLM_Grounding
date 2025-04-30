@@ -79,8 +79,10 @@ def log_final_evaluation(df, parameters, okvqa=False):
                 nonnan = df[df["image_reference_response"].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
                 for slice_col in slice_cols:
-                    if column == f"{log_metric}_{slice_col}":
+                    slice_metric_col = f"{log_metric}_{slice_col}"
+                    if column == slice_metric_col:
                         continue
-                    slice_false = df[df[f"{log_metric}_{slice_col}"] == False]
-                    nonnan = slice_false[slice_false["image_reference_response"].notna()]
-                    logger.info(f"{column} when {slice_col} is False: {nonnan[column].mean()}")
+                    for boolval in [True, False]:
+                        slice_df = df[df[slice_metric_col] == boolval]
+                        nonnan = slice_df[slice_df["image_reference_response"].notna()]
+                        logger.info(f"{column} when {slice_col} is {boolval}: {nonnan[column].mean()}")
