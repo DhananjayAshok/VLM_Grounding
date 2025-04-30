@@ -64,11 +64,11 @@ def log_final_evaluation(df, parameters, okvqa=False):
     if not okvqa:
         response_cols = ["full_information_response", "image_reference_response"]
         candidate_cols = response_cols.copy()
-        trivials = ["max", "mode"] + all_trivials
+        trivials = ["mode"] + ["max"] #+ all_trivials
         for trivial in trivials:
             for variant in response_cols:
                 candidate_cols.append(f"trivial_{trivial}_{variant}")
-        slice_cols = ["trivial_mode_image_reference_response", "trivial_max_image_reference_response"]
+        slice_cols = ["trivial_mode_image_reference_response", "trivial_mode_full_information_response"] #+ ["trivial_max_image_reference_response", "trivial_max_full_information_response"]
     else:
         candidate_cols = ["image_reference_response"]
         slice_cols = []
