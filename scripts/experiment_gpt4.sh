@@ -6,8 +6,8 @@ if [ -z "$dataset_name" ]; then
 fi
 
 # if model is not either gpt4-o or gpt4-o-mini, then error out
-if [[ $model != "gpt4o" && $model != "gpt-4o-mini" ]]; then
-  echo "Usage: $0 <dataset_name> <model_name>, where model_name is either gpt4-o or gpt4-o-mini, you gave $2"
+if [[ $model != "gpt-4o" && $model != "gpt-4o-mini" ]]; then
+  echo "Usage: $0 <dataset_name> <model_name>, where model_name is either gpt-4o or gpt-4o-mini, you gave $2"
   exit 1
 fi
 
