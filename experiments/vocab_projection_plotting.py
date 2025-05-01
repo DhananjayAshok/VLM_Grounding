@@ -35,12 +35,12 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, run_variant, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
-        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}_{vlm}_{run_variant}_projection_probability")
+        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/projection_probability/{run_variant}")
     if "full_information" in run_variants and "image_reference" in run_variants:
-        plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_full_information_vs_image_reference", parameters)
+        plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
         total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths. 
-        plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_trivial_black_vs_image_reference", parameters)
+        plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/trivial_black_vs_image_reference", parameters)
     del total_projections
 
     hidden_states = {}
@@ -50,11 +50,11 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         if "full_information" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["full_information"] = (true_hidden, false_hidden)
-            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}_{vlm}_cosine_full_information_vs_image_reference", parameters)
+            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference", parameters)
         if "trivial_black_image_reference" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
-            plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}_{vlm}_cosine_trivial_black_vs_image_reference", parameters)
+            plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference", parameters)
     return 
 
 
@@ -165,21 +165,23 @@ def lineplot(trues, falses, ylabel, save_name):
         for layer_idx, layer in enumerate(item):
             data.append([layer_idx, layer, "Failure"])
     data_df = pd.DataFrame(data, columns=columns)
-    data_df["Layer Index"] = data_df["Layer Index"].astype(int)
+    data_df["Layer Index"] = data_df["Layer Index"].astype(int)    
     sns.lineplot(data=data_df, x="Layer Index", y=ylabel, hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="sd") 
     plt.title("")
     plt.legend()
-    show(save_name)
+    show(save_name, data_df=data_df)
 
 
-def show(save_name, parameters=None):
+def show(save_path, parameters=None, data_df=None):
     if parameters is None:
         parameters = load_parameters()
-    figure_dir = parameters["results_dir"] + "/figures/"
-    if not os.path.exists(figure_dir):
-        os.makedirs(figure_dir)
+    figure_path = parameters["results_dir"] + f"/figures/{save_path}"
+    if not os.path.exists(figure_path):
+        os.makedirs(figure_path)
+    if data_df is not None:
+        data_df.to_csv(f"{figure_path}.csv", index=False)
     #plt.show()
-    plt.savefig(figure_dir + save_name+".pdf")
+    plt.savefig(f"{figure_path}.pdf")
     plt.clf()
 
     pass
@@ -216,7 +218,7 @@ def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_
     sns.lineplot(data=data_df, x="Layer Index", y="KL Divergence", hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="sd")
     plt.title("")
     plt.legend()
-    show(save_name, parameters)
+    show(save_name, parameters, data_df=data_df)
 
 def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, save_name, parameters):
     columns = ["Layer Index", "Cosine Similarity", "Linking Status"]
@@ -256,7 +258,7 @@ def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, s
     sns.lineplot(data=data_df, x="Layer Index", y="Cosine Similarity", hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="sd")
     plt.title("")
     plt.legend()
-    show(save_name, parameters)
+    show(save_name, parameters, data_df=data_df)
     return
 
 
