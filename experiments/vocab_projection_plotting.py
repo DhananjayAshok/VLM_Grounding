@@ -40,7 +40,7 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
     if "full_information" in run_variants and "image_reference" in run_variants:
         plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
-        total_projection["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched
+        total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched
         plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_trivial_black_vs_image_reference", parameters)
     del total_projections
 
