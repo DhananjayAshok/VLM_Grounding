@@ -17,36 +17,43 @@ sns.set_style("whitegrid")
 @click.option("--dataset", type=str, required=True, help="Dataset name")
 @click.option("--vlm", type=str, help="VLM name", default="llava-v1.6-vicuna-7b-hf")
 @click.option("--run_variants", type=click.Choice(["identification", "full_information", "image_reference", "trivial_black_full_information", "trivial_black_image_reference"]), multiple=True, default=["image_reference", "full_information", "trivial_black_image_reference"], help="Run variants to visualize")
-@click.option("--metric", type=str, default="two_way_inclusion", help="Metric to visualize")
+@click.option("--metric", type=str, default=None, help="Metric to visualize")
+@click.option("--remove_trivial_success", is_flag=True, default=False, help="Remove trivial success from the results")
 @click.pass_obj
-def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric):
+def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, remove_trivial_success):
+    if metric is None:
+        if "_mcq" in dataset:
+            metric = "mcq_correct"
+        else:
+            metric = "two_way_inclusion"
     results_df = get_results_df(dataset, vlm, parameters)
     total_projections = {}
     for run_variant in run_variants:
         kl_div, proj_prob, total_projection = recollect_projection(dataset, vlm, run_variant, parameters)
         metric_col = f"{metric}_{run_variant}_response"
-        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric_col, parameters)
-        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters)
-        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters, dict_return=True)
+        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric_col, parameters, remove_trivial_success=remove_trivial_success)
+        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters, remove_trivial_success=remove_trivial_success)
+        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
         lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}_{vlm}_{run_variant}_projection_probability")
     if "full_information" in run_variants and "image_reference" in run_variants:
         plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
+        total_projection["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched
         plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_trivial_black_vs_image_reference", parameters)
     del total_projections
 
     hidden_states = {}
     if "image_reference" in run_variants:
-        true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters)
+        true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters, remove_trivial_success=remove_trivial_success)
         hidden_states["image_reference"] = (true_hidden, false_hidden)
         if "full_information" in run_variants:
-            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters)
+            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["full_information"] = (true_hidden, false_hidden)
             plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}_{vlm}_cosine_full_information_vs_image_reference", parameters)
         if "trivial_black_image_reference" in run_variants:
-            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters)
+            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
             plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}_{vlm}_cosine_trivial_black_vs_image_reference", parameters)
     return 
@@ -63,11 +70,12 @@ def get_results_df(dataset, vlm, parameters=None):
     return results_df
 
 
-def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters, token_pos="input"):
+def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters, token_pos="input", remove_trivial_success=False):
     _, hidden_tracker, metric_col = get_hidden_states(dataset, model, metric, run_variant, parameters)
     dict_array = hidden_tracker.hidden_states
     trues = {}
     falses = {}
+    trivial_col = f"{metric}_trivial_mode_image_reference_response"
     for i, row in results_df.iterrows():
         if np.isnan(row[metric_col]) or row[metric_col] is None:
             continue
@@ -76,6 +84,8 @@ def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters,
                 parameters['logger'].warn(f"Index {i} not found in dict_array.")
                 continue
                 #log_error(parameters["logger"], f"Index {i} not found in dict_array.")
+            if remove_trivial_success and row[trivial_col] == True:
+                continue
             internal_dict = {}
             for key in dict_array[i]:
                 layer, last, token_pos_item = key.split("_")
@@ -108,7 +118,7 @@ def recollect_projection(dataset, vlm, run_variant, parameters=None):
     return vocab_projection_tracker.kl_divergence, vocab_projection_tracker.projection_prob, vocab_projection_tracker.total_projection
 
 
-def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict_return=False):
+def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict_return=False, remove_trivial_success=False):
     if  parameters is None:
         parameters = load_parameters()
     if dict_return:
@@ -117,10 +127,14 @@ def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict
     else:
         trues = []
         falses = []
+    metric = metric_col.split("_")[0]
+    trivial_col = f"{metric}_trivial_mode_image_reference_response"
     for i, row in results_df.iterrows():
         if np.isnan(row[metric_col]) or row[metric_col] is None:
             continue
         else:
+            if remove_trivial_success and row[trivial_col] == True:
+                continue
             if i not in dict_array:
                 parameters['logger'].warn(f"Index {i} not found in dict_array.")
                 continue
