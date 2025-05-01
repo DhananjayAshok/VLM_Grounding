@@ -8,7 +8,7 @@ datasets=(
     "landmarks"
 )
 
-models=("gpt4-o-mini" "gpt4-o")
+models=("gpt-4o-mini" "gpt-4o")
 
 for dataset in "${datasets[@]}"; do
     for model in "${models[@]}"; do
