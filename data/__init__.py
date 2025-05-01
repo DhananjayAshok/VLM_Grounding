@@ -17,7 +17,7 @@ def validate_classes(parameters, dataset_names, validation_vlm, validation_thres
 
 
 @click.command()
-@click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist"])
+@click.option("--dataset_names", multiple=True, help="The name of the dataset(s) to use", default=["mnist", "cifar100", "landmarks", "food101"])
 @click.option('--target_datapoints', type=int, default=1000, help='The number of datapoints to aim for in the dataset (lower bound, will overshoot).')
 @click.option("--do_mcq", default=True, help="Do MCQ generation")
 @click.pass_obj
