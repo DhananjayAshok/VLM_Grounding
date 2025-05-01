@@ -297,7 +297,7 @@ class DataCreator():
         return qa_strings
     
 
-    def save_data(self, target_datapoints=1000, min_images_per_question=5):
+    def save_data(self, target_datapoints=1000, min_images_per_question=10):
         """
         Saves the dataset to the processed_datasets folder
 
