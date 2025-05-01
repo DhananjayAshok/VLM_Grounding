@@ -104,7 +104,7 @@ class HuggingFaceInference:
             input_ids = inputs["input_ids"][0]
             for kind in look_for_words:
                 if entity is None and kind == "entity":
-                    look_for_words["entity"] = None
+                    look_indexes["entity"] = None
                     continue
                 word = kind if kind != "entity" else str(entity)
                 encoded_tokens = self.processor.tokenizer.encode(word)[default_start_len:]
@@ -122,9 +122,10 @@ class HuggingFaceInference:
                 output_hidden_states[f"{layer}_last_input"] = output["hidden_states"][0][layer][0, -1].detach().cpu().numpy()
                 output_hidden_states[f"{layer}_last_output"] = output["hidden_states"][-1][layer][0, -1].detach().cpu().numpy()
                 for kind in look_indexes:
-                    output_hidden_states[f"{layer}_{look_indexes[kind]}_{kind}"] = output["hidden_states"][0][layer][0, look_indexes[kind]].detach().cpu().numpy() # TODO: Need to check this
-                else:
-                    output_hidden_states[f"{layer}_{look_indexes[kind]}_{kind}"] = None
+                    if look_indexes[kind] is not None:
+                        output_hidden_states[f"{layer}_{look_indexes[kind]}_{kind}"] = output["hidden_states"][0][layer][0, look_indexes[kind]].detach().cpu().numpy() # TODO: Need to check this
+                    else:
+                        output_hidden_states[f"{layer}_None_{kind}"] = None
             response["hidden_states"] = output_hidden_states
         elif self.attention_tracking_mode:
             pass
