@@ -30,17 +30,16 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
     total_projections = {}
     for run_variant in run_variants:
         kl_div, proj_prob, total_projection = recollect_projection(dataset, vlm, run_variant, parameters)
-        metric_col = f"{metric}_{run_variant}_response"
-        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric_col, parameters, remove_trivial_success=remove_trivial_success)
-        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric_col, parameters, remove_trivial_success=remove_trivial_success)
-        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric_col, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
+        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric, run_variant, parameters, remove_trivial_success=remove_trivial_success)
+        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric, run_variant, parameters, remove_trivial_success=remove_trivial_success)
+        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, run_variant, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
         lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}_{vlm}_{run_variant}_projection_probability")
     if "full_information" in run_variants and "image_reference" in run_variants:
         plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
-        total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched
+        total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths. 
         plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}_{vlm}_kl_divergence_trivial_black_vs_image_reference", parameters)
     del total_projections
 
@@ -70,7 +69,7 @@ def get_results_df(dataset, vlm, parameters=None):
     return results_df
 
 
-def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters, token_pos="input", remove_trivial_success=False):
+def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters, token_kind="input", remove_trivial_success=False):
     _, hidden_tracker, metric_col = get_hidden_states(dataset, model, metric, run_variant, parameters)
     dict_array = hidden_tracker.hidden_states
     trues = {}
@@ -88,9 +87,9 @@ def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters,
                 continue
             internal_dict = {}
             for key in dict_array[i]:
-                layer, last, token_pos_item = key.split("_")
+                layer, pos, token_pos_item = key.split("_")
                 layer = int(layer)
-                if token_pos_item == token_pos:
+                if token_pos_item == token_kind:
                     internal_dict[layer] = dict_array[i][key]
             if row[metric_col] == True:
                 trues[i] = internal_dict
@@ -118,7 +117,7 @@ def recollect_projection(dataset, vlm, run_variant, parameters=None):
     return vocab_projection_tracker.kl_divergence, vocab_projection_tracker.projection_prob, vocab_projection_tracker.total_projection
 
 
-def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict_return=False, remove_trivial_success=False):
+def separate_by_metric(dict_array, results_df, metric, run_variant, parameters=None, dict_return=False, remove_trivial_success=False):
     if  parameters is None:
         parameters = load_parameters()
     if dict_return:
@@ -127,7 +126,7 @@ def separate_by_metric(dict_array, results_df, metric_col, parameters=None, dict
     else:
         trues = []
         falses = []
-    metric = metric_col.split("_")[0]
+    metric_col = f"{metric}_{run_variant}_response"
     trivial_col = f"{metric}_trivial_mode_image_reference_response"
     for i, row in results_df.iterrows():
         if np.isnan(row[metric_col]) or row[metric_col] is None:
