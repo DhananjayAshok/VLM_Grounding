@@ -1,7 +1,13 @@
 dataset_name=$1
-model="gpt4-0-mini" #or "gpt4-0"
+model=$2 #or "gpt4-o"
 if [ -z "$dataset_name" ]; then
-  echo "Usage: $0 <dataset_name>"
+  echo "Usage: $0 <dataset_name> <model_name>"
+  exit 1
+fi
+
+# if model is not either gpt4-o or gpt4-o-mini, then error out
+if [[ $model != "gpt4-o" && $model != "gpt4-o-mini" ]]; then
+  echo "Usage: $0 <dataset_name> <model_name>, where model_name is either gpt4-o or gpt4-o-mini, you gave $2"
   exit 1
 fi
 
