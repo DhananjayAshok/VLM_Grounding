@@ -25,7 +25,7 @@ datasets=(
 # gpt-4o-mini and gpt-4o need to be done separately, stage by stage, due to the way batching works
 
 for dataset_name in "${datasets[@]}"; do
-  echo "Running experiment for $dataset_name with $vlm"
+  echo "XXXXX Running experiment for $dataset_name with $vlm XXXXX"
     if [[ $vlm == "llava-v1.6-vicuna-7b-hf" ]]; then
         echo "Running hidden state tracking and vocabulary projection too"
         python main.py grounding_experiment --dataset_name $dataset_name --model $vlm --variant hidden_state_vocab_projection

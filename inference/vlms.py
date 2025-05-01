@@ -122,9 +122,9 @@ class HuggingFaceInference:
                 output_hidden_states[f"{layer}_last_input"] = output["hidden_states"][0][layer][0, -1].detach().cpu().numpy()
                 output_hidden_states[f"{layer}_last_output"] = output["hidden_states"][-1][layer][0, -1].detach().cpu().numpy()
                 for kind in look_indexes:
-                    output_hidden_states[f"{layer}_{kind}"] = output["hidden_states"][0][layer][0, look_indexes[kind]].detach().cpu().numpy() # TODO: Need to check this
+                    output_hidden_states[f"{layer}_{look_indexes[kind]}_{kind}"] = output["hidden_states"][0][layer][0, look_indexes[kind]].detach().cpu().numpy() # TODO: Need to check this
                 else:
-                    output_hidden_states[f"{layer}_{kind}"] = None
+                    output_hidden_states[f"{layer}_{look_indexes[kind]}_{kind}"] = None
             response["hidden_states"] = output_hidden_states
         elif self.attention_tracking_mode:
             pass

@@ -35,7 +35,7 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, run_variant, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
-        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/projection_probability/{run_variant}")
+        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/projection_probability/{run_variant}")
     if "full_information" in run_variants and "image_reference" in run_variants:
         plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
@@ -176,8 +176,9 @@ def show(save_path, parameters=None, data_df=None):
     if parameters is None:
         parameters = load_parameters()
     figure_path = parameters["results_dir"] + f"/figures/{save_path}"
-    if not os.path.exists(figure_path):
-        os.makedirs(figure_path)
+    figure_dir = os.path.dirname(figure_path)
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
     if data_df is not None:
         data_df.to_csv(f"{figure_path}.csv", index=False)
     #plt.show()
