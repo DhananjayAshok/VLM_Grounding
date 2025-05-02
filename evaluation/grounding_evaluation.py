@@ -17,9 +17,15 @@ def stringify(element, parameters=None):
 
         
 
+def safe_isnan(x):
+    if not isinstance(x, float):
+        return False
+    else:
+        return np.isnan(x)
+
 def column_mode(row):
     columns = row.index
-    cleaned = [stringify(row[col]).strip() for col in columns if not np.isnan(row[col])]
+    cleaned = [stringify(row[col]).strip() for col in columns if not safe_isnan(row[col])]
     if len(cleaned) == 0:
         return None
     mode = max(set(cleaned), key=cleaned.count)
