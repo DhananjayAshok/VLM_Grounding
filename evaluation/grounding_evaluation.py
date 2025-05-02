@@ -33,6 +33,8 @@ def column_mode(row):
     return mode
 
 
+metrics_to_use = ["two_way_inclusion"]#, "inclusion", "exact_match", "bleu"]
+
 
 def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     reference_column = "answer_str"
@@ -44,7 +46,7 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
         candidate_columns = [f"{variant}_response" for variant in variants]
     else:
         candidate_columns = ["image_reference_response"]
-    metrics = ["two_way_inclusion"]#, "inclusion", "exact_match", "bleu"]
+    metrics = metrics_to_use
     if mcq:
         metrics.append("mcq_correct")
     for metric in tqdm(metrics, desc="Computing metrics"):
@@ -54,7 +56,7 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
             df = df_compute_metric_str(metric, df, candidate_column, give_ref, output_column=output_column, save=False, parameters=parameters, verbose=verbose)
     if okvqa:
         return df
-    for metric in metrics:
+    for metric in tqdm(metrics, desc="Computing trivial aggregation metrics"):
         for variant in ["full_information", "image_reference"]:
             output_columns = []
             candidate_columns = []
@@ -93,7 +95,7 @@ def log_final_evaluation(df, parameters, okvqa=False):
     else:
         candidate_cols = ["image_reference_response"]
         slice_cols = []
-    metrics = ["two_way_inclusion", "mcq_correct"] #+ ["bleu", "inclusion", "exact_match"] 
+    metrics = metrics_to_use + ["mcq_correct"]
     for log_metric in metrics:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
@@ -116,4 +118,4 @@ def log_final_evaluation(df, parameters, okvqa=False):
                         for boolval in [False]:
                             slice_df = df[df[slice_metric_col] == boolval]
                             nonnan = slice_df[slice_df["image_reference_response"].notna()]
-                            logger.info(f"{column} when {slice_col} is {boolval}: {nonnan[column].mean()}")
+                            logger.info(f"\t{column} when {slice_col} is {boolval}: {nonnan[column].mean()}")
