@@ -26,8 +26,9 @@ def do_checked_evaluation(vlm, filename, metric_str, candidate_column, reference
 @click.option("--stage", help="The stage of the grounding process", default="all", type=click.Choice(["identification", "full_information", "image_reference", "trivial", "evaluation", "all",]))
 @click.option("--checkpoint_every", type=float, default=0.1, help="Checkpoint every x percent of the dataset")
 @click.option("--variant", type=click.Choice(["default" ,"hidden_state", "vocab_projection", "hidden_state_vocab_projection"]), help="The variant of the forward pass, controlling what information is stored.", default="default")
+@click.option("--force_recompute", default=True, help="Force recompute the metrics on the results even if they already exist")
 @click.pass_obj
-def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_every, variant):
+def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_every, variant, force_recompute):
     """
     Run primary experiment for dataset
     """
@@ -68,9 +69,12 @@ def grounding_experiment(parameters, dataset_name, model, stage, checkpoint_ever
     if stage in ["evaluation", "all"]:
         filename = parameters["results_dir"] + f"/{dataset}/{vlm}/trivial_results.csv"
         df = pd.read_csv(filename)
-        df = do_final_evaluation(df, parameters, mcq=mcq)
-        filename = filename.replace("trivial_results.csv", "final_results.csv")
-        df.to_csv(filename, index=False)
+        target_filename = filename.replace("trivial_results.csv", "final_results.csv")
+        if not os.path.exists(target_filename) or force_recompute:
+            df = do_final_evaluation(df, parameters, mcq=mcq)
+            df.to_csv(target_filename, index=False)
+        else:
+            df = pd.read_csv(target_filename)
         log_final_evaluation(df, parameters)
 
 
