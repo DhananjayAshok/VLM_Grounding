@@ -1,11 +1,25 @@
 from utils.log_handling import log_error
+from utils.parameter_handling import load_parameters
 from evaluation.metrics import df_compute_metric_str
 from experiments.grounding_utils.trivial import all_trivials
+import numpy as np
 
+
+def stringify(element, parameters=None):
+    if parameters is None:
+        parameters = load_parameters()
+    if isinstance(element, float):
+        return str(int(element))
+    elif isinstance(element, str) or isinstance(element, int):
+        return str(element)
+    else:
+        log_error(parameters["logger"], f"Unknown type {type(element)} for element {element}.")
+
+        
 
 def column_mode(row):
     columns = row.index
-    cleaned = [row[col].strip() for col in columns if isinstance(row[col], str)]
+    cleaned = [stringify(row[col]).strip() for col in columns if not np.isnan(row[col])]
     if len(cleaned) == 0:
         return None
     mode = max(set(cleaned), key=cleaned.count)
