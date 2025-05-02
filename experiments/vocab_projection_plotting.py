@@ -49,6 +49,7 @@ def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters,
                     value = dict_array[i][key]
                     if value is None:
                         parameters['logger'].warn(f"Value for {key} is None on variant {run_variant} with token kind {token_kind}.")
+                        continue
                     internal_dict[layer] = value
             if row[metric_col] == True:
                 trues[i] = internal_dict
