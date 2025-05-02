@@ -13,53 +13,6 @@ import pandas as pd
 
 sns.set_style("whitegrid")
 
-@click.command()
-@click.option("--dataset", type=str, required=True, help="Dataset name")
-@click.option("--vlm", type=str, help="VLM name", default="llava-v1.6-vicuna-7b-hf")
-@click.option("--run_variants", type=click.Choice(["identification", "full_information", "image_reference", "trivial_black_full_information", "trivial_black_image_reference"]), multiple=True, default=["image_reference", "full_information", "trivial_black_image_reference"], help="Run variants to visualize")
-@click.option("--metric", type=str, default=None, help="Metric to visualize")
-@click.option("--remove_trivial_success", is_flag=True, default=False, help="Remove trivial success from the results")
-@click.pass_obj
-def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, remove_trivial_success):
-    if metric is None:
-        if "_mcq" in dataset:
-            metric = "mcq_correct"
-        else:
-            metric = "two_way_inclusion"
-    results_df = get_results_df(dataset, vlm, parameters)
-    total_projections = {}
-    for run_variant in run_variants:
-        kl_div, proj_prob, total_projection = recollect_projection(dataset, vlm, run_variant, parameters)
-        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric, run_variant, parameters, remove_trivial_success=remove_trivial_success)
-        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric, run_variant, parameters, remove_trivial_success=remove_trivial_success)
-        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, run_variant, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
-        total_projections[run_variant] = (true_total_projections, false_total_projections)
-        #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
-        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/projection_probability/{run_variant}")
-    if "full_information" in run_variants and "image_reference" in run_variants:
-        plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/full_information_vs_image_reference", parameters)
-    if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
-        total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths. 
-        plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/trivial_black_vs_image_reference", parameters)
-    del total_projections
-
-    hidden_states = {}
-    if "image_reference" in run_variants:
-        true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters, remove_trivial_success=remove_trivial_success)
-        hidden_states["image_reference"] = (true_hidden, false_hidden)
-        if "full_information" in run_variants:
-            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, remove_trivial_success=remove_trivial_success)
-            hidden_states["full_information"] = (true_hidden, false_hidden)
-            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference", parameters)
-        if "trivial_black_image_reference" in run_variants:
-            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, remove_trivial_success=remove_trivial_success)
-            hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
-            hidden_states["trivial_black_image_reference"][0].update(hidden_states["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths.
-            plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference", parameters)
-    return 
-
-
-
 def get_results_df(dataset, vlm, parameters=None):
     if parameters is None:
         parameters = load_parameters()
@@ -156,6 +109,23 @@ def separate_by_metric(dict_array, results_df, metric, run_variant, parameters=N
     else:
         return np.array(trues), np.array(falses)
 
+def show(save_path, parameters=None, data_df=None):
+    if parameters is None:
+        parameters = load_parameters()
+    figure_path = parameters["results_dir"] + f"/figures/{save_path}"
+    figure_dir = os.path.dirname(figure_path)
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
+    if data_df is not None:
+        data_df.to_csv(f"{figure_path}.csv", index=False)
+    #plt.show()
+    plt.savefig(f"{figure_path}.pdf")
+    plt.clf()
+
+    pass
+
+
+
 def lineplot(trues, falses, ylabel, save_name):
     columns = ["Layer Index", ylabel,"Linking Status"]
     data = []
@@ -173,20 +143,6 @@ def lineplot(trues, falses, ylabel, save_name):
     show(save_name, data_df=data_df)
 
 
-def show(save_path, parameters=None, data_df=None):
-    if parameters is None:
-        parameters = load_parameters()
-    figure_path = parameters["results_dir"] + f"/figures/{save_path}"
-    figure_dir = os.path.dirname(figure_path)
-    if not os.path.exists(figure_dir):
-        os.makedirs(figure_dir)
-    if data_df is not None:
-        data_df.to_csv(f"{figure_path}.csv", index=False)
-    #plt.show()
-    plt.savefig(f"{figure_path}.pdf")
-    plt.clf()
-
-    pass
 
 def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_name, parameters):
     """
@@ -265,6 +221,78 @@ def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, s
 
 
     
+
+
+@click.command()
+@click.option("--dataset", type=str, required=True, help="Dataset name")
+@click.option("--vlm", type=str, help="VLM name", default="llava-v1.6-vicuna-7b-hf")
+@click.option("--run_variants", type=click.Choice(["identification", "full_information", "image_reference", "trivial_black_full_information", "trivial_black_image_reference"]), multiple=True, default=["image_reference", "full_information", "trivial_black_image_reference"], help="Run variants to visualize")
+@click.option("--metric", type=str, default=None, help="Metric to visualize")
+@click.option("--remove_trivial_success", is_flag=True, default=False, help="Remove trivial success from the results")
+@click.pass_obj
+def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, remove_trivial_success):
+    if metric is None:
+        if "_mcq" in dataset:
+            metric = "mcq_correct"
+        else:
+            metric = "two_way_inclusion"
+    results_df = get_results_df(dataset, vlm, parameters)
+    total_projections = {}
+    for run_variant in run_variants:
+        kl_div, proj_prob, total_projection = recollect_projection(dataset, vlm, run_variant, parameters)
+        true_kl_divs, false_kl_divs = separate_by_metric(kl_div, results_df, metric, run_variant, parameters, remove_trivial_success=remove_trivial_success)
+        true_proj_probs, false_proj_probs = separate_by_metric(proj_prob, results_df, metric, run_variant, parameters, remove_trivial_success=remove_trivial_success)
+        true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, run_variant, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
+        total_projections[run_variant] = (true_total_projections, false_total_projections)
+        #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
+        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/projection_probability/{run_variant}")
+    if "full_information" in run_variants and "image_reference" in run_variants:
+        plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/full_information_vs_image_reference", parameters)
+    if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
+        total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths. 
+        plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/trivial_black_vs_image_reference", parameters)
+    del total_projections
+
+    hidden_states = {}
+    if "image_reference" in run_variants:
+        true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters, remove_trivial_success=remove_trivial_success)
+        hidden_states["image_reference"] = (true_hidden, false_hidden)
+        if "full_information" in run_variants:
+            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, remove_trivial_success=remove_trivial_success)
+            hidden_states["full_information"] = (true_hidden, false_hidden)
+            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference", parameters)
+            del hidden_states["full_information"]
+        if "trivial_black_image_reference" in run_variants:
+            true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, remove_trivial_success=remove_trivial_success)
+            hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
+            hidden_states["trivial_black_image_reference"][0].update(hidden_states["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths.
+            plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference", parameters)
+            del hidden_states["trivial_black_image_reference"]
+    del hidden_states
+    hidden_states = {}
+    if "image_reference" in run_variants:
+        object_true_hidden, object_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters, token_kind="object", remove_trivial_success=remove_trivial_success)
+        image_true_hidden, image_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "image_reference", parameters, token_kind="image", remove_trivial_success=remove_trivial_success)
+        hidden_states["image_reference_object"] = (object_true_hidden, object_false_hidden)
+        hidden_states["image_reference_image"] = (image_true_hidden, image_false_hidden)
+        if "full_information" in run_variants:
+            entity_true_hidden, entity_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, token_kind="entity", remove_trivial_success=remove_trivial_success)
+            hidden_states["full_information"] = (entity_true_hidden, entity_false_hidden)
+            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference_object"][0], hidden_states["image_reference_object"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference_object", parameters)
+            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference_image"][0], hidden_states["image_reference_image"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference_image", parameters)
+            del hidden_states["full_information"]
+        if "trivial_black_image_reference" in run_variants:
+            object_true_hidden, object_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, token_kind="object", remove_trivial_success=remove_trivial_success)
+            image_true_hidden, image_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, token_kind="image", remove_trivial_success=remove_trivial_success)
+            hidden_states["trivial_black_image_reference_object"] = (object_true_hidden, object_false_hidden)
+            hidden_states["trivial_black_image_reference_image"] = (image_true_hidden, image_false_hidden)
+            hidden_states["trivial_black_image_reference_object"][0].update(hidden_states["trivial_black_image_reference_object"][1])
+            hidden_states["trivial_black_image_reference_image"][0].update(hidden_states["trivial_black_image_reference_image"][1])
+            plot_contrast_cosine(hidden_states["trivial_black_image_reference_object"][0], hidden_states["image_reference_object"][0], hidden_states["image_reference_object"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference_object", parameters)
+            plot_contrast_cosine(hidden_states["trivial_black_image_reference_image"][0], hidden_states["image_reference_image"][0], hidden_states["image_reference_image"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference_image", parameters)
+    return 
+
+
 
 
 
