@@ -30,8 +30,8 @@ def compute_secondary_parameters(params):
             params["log_file"] = log_file
     logger = get_logger(filename=params["log_file"])
     params["logger"] = logger
-    logger.info("Initialized Logger with parameters: ")
-    logger.info(f"Parameters: {params}")
+    #logger.info("Initialized Logger with parameters: ")
+    #logger.info(f"Parameters: {params}")
     return 
 
 
