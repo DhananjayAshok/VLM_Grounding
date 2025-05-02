@@ -92,17 +92,22 @@ def log_final_evaluation(df, parameters, okvqa=False):
     else:
         candidate_cols = ["image_reference_response"]
         slice_cols = []
-    for log_metric in ["two_way_inclusion", "bleu", "inclusion", "exact_match", "mcq_correct"]:
+    metrics = ["two_way_inclusion", "mcq_correct"] #+ ["bleu", "inclusion", "exact_match"] 
+    for log_metric in metrics:
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
-                nonnan = df[df["image_reference_response"].notna()]
+                nan_col = candidate_col
+                if candidate_col == "full_information_response":
+                    nan_col = "image_reference_response"
+                nonnan = df[df[nan_col].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
-                for slice_col in slice_cols:
-                    slice_metric_col = f"{log_metric}_{slice_col}"
-                    if column == slice_metric_col:
-                        continue
-                    for boolval in [True, False]:
-                        slice_df = df[df[slice_metric_col] == boolval]
-                        nonnan = slice_df[slice_df["image_reference_response"].notna()]
-                        logger.info(f"{column} when {slice_col} is {boolval}: {nonnan[column].mean()}")
+                if candidate_col not in ["full_information_response", "trivial_mode_image_reference_response"]:
+                    for slice_col in slice_cols:
+                        slice_metric_col = f"{log_metric}_{slice_col}"
+                        if column == slice_metric_col:
+                            continue
+                        for boolval in [True, False]:
+                            slice_df = df[df[slice_metric_col] == boolval]
+                            nonnan = slice_df[slice_df["image_reference_response"].notna()]
+                            logger.info(f"{column} when {slice_col} is {boolval}: {nonnan[column].mean()}")

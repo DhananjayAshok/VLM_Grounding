@@ -110,21 +110,6 @@ def separate_by_metric(dict_array, results_df, metric, run_variant, parameters=N
     else:
         return np.array(trues), np.array(falses)
 
-def show(save_path, parameters=None, data_df=None):
-    if parameters is None:
-        parameters = load_parameters()
-    figure_path = parameters["results_dir"] + f"/figures/{save_path}"
-    figure_dir = os.path.dirname(figure_path)
-    if not os.path.exists(figure_dir):
-        os.makedirs(figure_dir)
-    if data_df is not None:
-        data_df.to_csv(f"{figure_path}.csv", index=False)
-    #plt.show()
-    plt.savefig(f"{figure_path}.pdf")
-    plt.clf()
-
-    pass
-
 
 
 def lineplot(plotter, trues, falses, ylabel, save_name):
