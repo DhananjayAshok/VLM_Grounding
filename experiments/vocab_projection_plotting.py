@@ -13,6 +13,8 @@ import pandas as pd
 
 sns.set_style("whitegrid")
 
+
+
 def get_results_df(dataset, vlm, parameters=None):
     if parameters is None:
         parameters = load_parameters()
@@ -44,7 +46,10 @@ def get_hidden_dict(results_df, dataset, model, metric, run_variant, parameters,
                 layer, pos, token_pos_item = key.split("_")
                 layer = int(layer)
                 if token_pos_item == token_kind:
-                    internal_dict[layer] = dict_array[i][key]
+                    value = dict_array[i][key]
+                    if value is None:
+                        parameters['logger'].warn(f"Value for {key} is None on variant {run_variant} with token kind {token_kind}.")
+                    internal_dict[layer] = value
             if row[metric_col] == True:
                 trues[i] = internal_dict
             elif row[metric_col] == False:
