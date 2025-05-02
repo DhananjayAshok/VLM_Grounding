@@ -32,6 +32,14 @@ def column_mode(row):
     mode = max(set(cleaned), key=cleaned.count)
     return mode
 
+def get_column_mode(df, columns):
+    modes = []
+    for i, row in tqdm(df.iterrows(), total=len(df), desc="Computing column mode"):
+        mode = column_mode(row[columns])
+        modes.append(mode)
+    return modes
+
+
 
 metrics_to_use = ["two_way_inclusion"]#, "inclusion", "exact_match", "bleu"]
 
@@ -66,7 +74,7 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
                 output_column = f"{metric}_{candidate_column}"
                 output_columns.append(output_column)
             # take the min over these columns
-            df[f"trivial_mode_{variant}_response"] = df[candidate_columns].apply(column_mode, axis=1)
+            df[f"trivial_mode_{variant}_response"] = get_column_mode(df, candidate_columns)#df[candidate_columns].apply(column_mode, axis=1)
             give_ref = reference_column if metric != "mcq_correct" else "mcq_answer"
             df = df_compute_metric_str(metric, df, f"trivial_mode_{variant}_response", give_ref, output_column=f"{metric}_trivial_mode_{variant}_response", save=False, parameters=parameters, verbose=verbose)
             df[f"{metric}_trivial_min_{variant}_response"] = df[output_columns].min(axis=1)
