@@ -54,6 +54,7 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         if "trivial_black_image_reference" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
+            hidden_states["trivial_black_image_reference"][0].update(hidden_states["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths.
             plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference", parameters)
     return 
 
