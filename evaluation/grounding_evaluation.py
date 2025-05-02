@@ -3,6 +3,7 @@ from utils.parameter_handling import load_parameters
 from evaluation.metrics import df_compute_metric_str
 from experiments.grounding_utils.trivial import all_trivials
 import numpy as np
+from tqdm import tqdm
 
 
 def stringify(element, parameters=None):
@@ -43,10 +44,10 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
         candidate_columns = [f"{variant}_response" for variant in variants]
     else:
         candidate_columns = ["image_reference_response"]
-    metrics = ["inclusion", "two_way_inclusion", "exact_match", "bleu"]
+    metrics = ["two_way_inclusion"]#, "inclusion", "exact_match", "bleu"]
     if mcq:
         metrics.append("mcq_correct")
-    for metric in metrics:
+    for metric in tqdm(metrics, desc="Computing metrics"):
         for candidate_column in candidate_columns:
             output_column = f"{metric}_{candidate_column}"
             give_ref = reference_column if metric != "mcq_correct" else "mcq_answer"
