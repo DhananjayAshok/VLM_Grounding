@@ -97,9 +97,14 @@ def log_final_evaluation(df, parameters, okvqa=False):
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
-                nan_col = candidate_col
                 if candidate_col == "full_information_response":
                     nan_col = "image_reference_response"
+                elif "trivial_mode" in candidate_col:
+                    nan_col = candidate_col.replace("mode", "black")
+                elif "trivial_max" in candidate_col:
+                    nan_col = candidate_col.replace("max", "black")
+                else:
+                    nan_col = candidate_col
                 nonnan = df[df[nan_col].notna()]
                 logger.info(f"{column}: {nonnan[column].mean()}")
                 if candidate_col not in ["full_information_response", "trivial_mode_image_reference_response"]:
