@@ -11,9 +11,11 @@ def load_yaml(yaml_path):
 def compute_secondary_parameters(params):
     params["data_dir"] = os.path.join(params["storage_dir"], "data")
     params["model_dir"] = os.path.join(params["storage_dir"], "models")
-    params["log_dir"] = os.path.join(params["storage_dir"], "logs")
     params["tmp_dir"] = os.path.join(params["storage_dir"], "tmp")
-    for dir in ["data_dir", "model_dir", "log_dir"]:
+    params["log_dir"] = os.path.join(params["results_dir"], "logs")
+    params["figure_dir"] = os.path.join(params["results_dir"], "figures")
+
+    for dir in ["data_dir", "model_dir", "log_dir", "tmp_dir", "figure_dir"]:
         if not os.path.exists(params[dir]):
             os.makedirs(params[dir])
     if "log_file" not in params:
@@ -28,6 +30,10 @@ def compute_secondary_parameters(params):
             params["log_file"] = log_file
     logger = get_logger(filename=params["log_file"])
     params["logger"] = logger
+    logger.info("Initialized Logger with parameters: ")
+    logger.info(f"Parameters: {params}")
+    return 
+
 
 
 def load_parameters():
@@ -36,7 +42,7 @@ def load_parameters():
 
         :return: A dictionary of parameters
     """
-    essential_keys = ["storage_dir"]
+    essential_keys = ["storage_dir", "results_dir", "figure_force_save"]
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     params = {"project_root": project_root}
     logger = get_logger() 

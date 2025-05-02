@@ -5,15 +5,10 @@ from utils.log_handling import log_error
 from experiments.grounding_utils.common import VocabProjectionTracking
 from experiments.hidden_state_predictor import get_hidden_states
 from inference.vlms import kl_divergence
-import matplotlib.pyplot as plt
-import seaborn as sns
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-
-sns.set_style("whitegrid")
-
-
+from utils.plot_utils import Plotter, sns, plt
 
 def get_results_df(dataset, vlm, parameters=None):
     if parameters is None:
@@ -132,7 +127,7 @@ def show(save_path, parameters=None, data_df=None):
 
 
 
-def lineplot(trues, falses, ylabel, save_name):
+def lineplot(plotter, trues, falses, ylabel, save_name):
     columns = ["Layer Index", ylabel,"Linking Status"]
     data = []
     for item in trues:
@@ -145,12 +140,15 @@ def lineplot(trues, falses, ylabel, save_name):
     data_df["Layer Index"] = data_df["Layer Index"].astype(int)    
     sns.lineplot(data=data_df, x="Layer Index", y=ylabel, hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="se") 
     plt.title("")
-    plt.legend()
-    show(save_name, data_df=data_df)
+    plt.legend(loc='lower left', #bbox_to_anchor=(1, 1), 
+               frameon=True, fancybox=True, shadow=True, fontsize=plotter.size_params["legend_font_size"],
+               borderaxespad=1.0, borderpad=1.0,
+               labelspacing=1.0)
+    plotter.show(save_path=save_name, data_df=data_df)
 
 
 
-def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_name, parameters):
+def plot_contrast_kl(plotter, reference_truths, candidate_truths, candidate_falses, save_name, parameters):
     """
     Compute the KL divergence between the reference and candidate distributions.
     """
@@ -181,10 +179,13 @@ def plot_contrast_kl(reference_truths, candidate_truths, candidate_falses, save_
     data_df["Layer Index"] = data_df["Layer Index"].astype(int)
     sns.lineplot(data=data_df, x="Layer Index", y="KL Divergence", hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="se")
     plt.title("")
-    plt.legend()
-    show(save_name, parameters, data_df=data_df)
+    plt.legend(loc='lower left', #bbox_to_anchor=(1, 1), 
+               frameon=True, fancybox=True, shadow=True, fontsize=plotter.size_params["legend_font_size"],
+               borderaxespad=1.0, borderpad=1.0,
+               labelspacing=1.0)
+    plotter.show(save_path=save_name, data_df=data_df)
 
-def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, save_name, parameters):
+def plot_contrast_cosine(plotter, reference_truths, candidate_truths, candidate_falses, save_name, parameters):
     columns = ["Layer Index", "Cosine Similarity", "Linking Status"]
     data = []
     for idx in tqdm(candidate_truths, desc="Computing Cosine Similarity", total=len(candidate_truths)):
@@ -221,8 +222,11 @@ def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, s
     data_df["Layer Index"] = data_df["Layer Index"].astype(int)
     sns.lineplot(data=data_df, x="Layer Index", y="Cosine Similarity", hue="Linking Status", palette=["green", "red"], linewidth=2.5, errorbar="se")
     plt.title("")
-    plt.legend()
-    show(save_name, parameters, data_df=data_df)
+    plt.legend(loc='lower left', #bbox_to_anchor=(1, 1), 
+               frameon=True, fancybox=True, shadow=True, fontsize=plotter.size_params["legend_font_size"],
+               borderaxespad=1.0, borderpad=1.0,
+               labelspacing=1.0)
+    plotter.show(save_path=save_name, data_df=data_df)
     return
 
 
@@ -237,6 +241,7 @@ def plot_contrast_cosine(reference_truths, candidate_truths, candidate_falses, s
 @click.option("--remove_trivial_success", is_flag=True, default=False, help="Remove trivial success from the results")
 @click.pass_obj
 def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, remove_trivial_success):
+    plotter = Plotter(parameters)
     if metric is None:
         if "_mcq" in dataset:
             metric = "mcq_correct"
@@ -251,12 +256,12 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         true_total_projections, false_total_projections = separate_by_metric(total_projection, results_df, metric, run_variant, parameters, dict_return=True, remove_trivial_success=remove_trivial_success)
         total_projections[run_variant] = (true_total_projections, false_total_projections)
         #lineplot(true_kl_divs, false_kl_divs, "KL Divergence w Prev Layer", f"{dataset}_{vlm}_{run_variant}_kl_divergence")
-        lineplot(true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/projection_probability/{run_variant}")
+        lineplot(plotter, true_proj_probs, false_proj_probs, "Probability of Token", f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/projection_probability/{run_variant}")
     if "full_information" in run_variants and "image_reference" in run_variants:
-        plot_contrast_kl(total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/full_information_vs_image_reference", parameters)
+        plot_contrast_kl(plotter, total_projections["full_information"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/full_information_vs_image_reference", parameters)
     if "trivial_black_image_reference" in run_variants and "image_reference" in run_variants:
         total_projections["trivial_black_image_reference"][0].update(total_projections["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths. 
-        plot_contrast_kl(total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/trivial_black_vs_image_reference", parameters)
+        plot_contrast_kl(plotter, total_projections["trivial_black_image_reference"][0], total_projections["image_reference"][0], total_projections["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/kl_divergence/trivial_black_vs_image_reference", parameters)
     del total_projections
 
     hidden_states = {}
@@ -266,13 +271,13 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         if "full_information" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["full_information"] = (true_hidden, false_hidden)
-            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference", parameters)
+            plot_contrast_cosine(plotter, hidden_states["full_information"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference", parameters)
             del hidden_states["full_information"]
         if "trivial_black_image_reference" in run_variants:
             true_hidden, false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, remove_trivial_success=remove_trivial_success)
             hidden_states["trivial_black_image_reference"] = (true_hidden, false_hidden)
             hidden_states["trivial_black_image_reference"][0].update(hidden_states["trivial_black_image_reference"][1]) # This is a hack to get the same format as the other ones so that the hidden states can be matched, but the trivial black here are not the truths.
-            plot_contrast_cosine(hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference", parameters)
+            plot_contrast_cosine(plotter, hidden_states["trivial_black_image_reference"][0], hidden_states["image_reference"][0], hidden_states["image_reference"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference", parameters)
             del hidden_states["trivial_black_image_reference"]
     del hidden_states
     hidden_states = {}
@@ -284,8 +289,8 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
         if "full_information" in run_variants:
             entity_true_hidden, entity_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "full_information", parameters, token_kind="entity", remove_trivial_success=remove_trivial_success)
             hidden_states["full_information"] = (entity_true_hidden, entity_false_hidden)
-            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference_object"][0], hidden_states["image_reference_object"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference_object", parameters)
-            plot_contrast_cosine(hidden_states["full_information"][0], hidden_states["image_reference_image"][0], hidden_states["image_reference_image"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference_image", parameters)
+            plot_contrast_cosine(plotter, hidden_states["full_information"][0], hidden_states["image_reference_object"][0], hidden_states["image_reference_object"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference_object", parameters)
+            plot_contrast_cosine(plotter, hidden_states["full_information"][0], hidden_states["image_reference_image"][0], hidden_states["image_reference_image"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/full_information_vs_image_reference_image", parameters)
             del hidden_states["full_information"]
         if "trivial_black_image_reference" in run_variants:
             object_true_hidden, object_false_hidden = get_hidden_dict(results_df, dataset, vlm, metric, "trivial_black_image_reference", parameters, token_kind="object", remove_trivial_success=remove_trivial_success)
@@ -294,8 +299,8 @@ def visualize_vocab_projection(parameters, dataset, vlm, run_variants, metric, r
             hidden_states["trivial_black_image_reference_image"] = (image_true_hidden, image_false_hidden)
             hidden_states["trivial_black_image_reference_object"][0].update(hidden_states["trivial_black_image_reference_object"][1])
             hidden_states["trivial_black_image_reference_image"][0].update(hidden_states["trivial_black_image_reference_image"][1])
-            plot_contrast_cosine(hidden_states["trivial_black_image_reference_object"][0], hidden_states["image_reference_object"][0], hidden_states["image_reference_object"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference_object", parameters)
-            plot_contrast_cosine(hidden_states["trivial_black_image_reference_image"][0], hidden_states["image_reference_image"][0], hidden_states["image_reference_image"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference_image", parameters)
+            plot_contrast_cosine(plotter, hidden_states["trivial_black_image_reference_object"][0], hidden_states["image_reference_object"][0], hidden_states["image_reference_object"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference_object", parameters)
+            plot_contrast_cosine(plotter, hidden_states["trivial_black_image_reference_image"][0], hidden_states["image_reference_image"][0], hidden_states["image_reference_image"][1], f"{dataset}/{vlm}/remove_trivial_{remove_trivial_success}/cosine_similarity/trivial_black_vs_image_reference_image", parameters)
     return 
 
 
