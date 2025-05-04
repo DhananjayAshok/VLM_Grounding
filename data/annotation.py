@@ -24,7 +24,7 @@ def split_annotation_files(parameters, model, metric):
         df = pd.read_csv(results_path)
         df = df[df[f"{metric}_trivial_mode_image_reference_response"] == False].reset_index() # this should also only get the ones where full information passes
         # filter so that only unique question_ids remain
-        df = df.drop_duplicates(subset=["question_id"]).reset_index()
+        df = df.drop_duplicates(subset=["question_id"], ignore_index=True)
         samples = df.sample(n_points_per_dataset, random_state=42).reset_index()
         for i in range(len(samples)):
             class_name, question_str, answer_str = get(samples, i)
@@ -49,4 +49,6 @@ def process_annotation_results(parameters):
     base_df["answer_correct_1"] = second_df["answer_correct"]
     base_df["question_relevant_2"] = third_df["question_relevant"]
     base_df["answer_correct_2"] = third_df["answer_correct"]
+
     
+
