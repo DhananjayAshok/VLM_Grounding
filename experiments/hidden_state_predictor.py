@@ -231,6 +231,7 @@ def do_selective_prediction(y_test, test_pred, test_pred_perp, layer, parameters
         risk_perp = compute_risk(test_pred_perp, y_test, threshold)
         data.append(["Perplexity", threshold, coverage_perp, risk_perp])
     df = pd.DataFrame(data, columns=columns)
+    os.makedirs(f"{parameters['results_dir']}/okvqa_selective_prediction", exist_ok=True)
     df.to_csv(f"{parameters['results_dir']}/okvqa_selective_prediction/{layer}.csv", index=False)
     return df
 
