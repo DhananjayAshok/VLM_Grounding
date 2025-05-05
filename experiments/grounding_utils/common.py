@@ -38,7 +38,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
     if results_df[f"{variant}_complete"].all():
         parameters["logger"].warning(f"{variant} script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
         return 
-    names = [f"{vlm}_{dataset}_{key}}" for key in image_texts.keys()]
+    names = [f"{vlm}_{dataset}_{key}" for key in image_texts.keys()]
     statuses = [vlm.get_batch_status(name) for name in names]
     completed = all([status == 1 for status in statuses])
     running = any([status == 0 for status in statuses])

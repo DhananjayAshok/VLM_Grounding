@@ -53,26 +53,45 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
     if results_df[f"{variant}_complete"].all():
         parameters["logger"].warning(f"Trivial experiment script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
         return
+    names = [f"{vlm}_{dataset}_{key}" for key in image_texts.keys()]
+    statuses = [vlm.get_batch_status(name) for name in names]
+    completed = all([status == 1 for status in statuses])
+    running = any([status == 0 for status in statuses])
+    not_sent = all([status == None for status in statuses])
+    if running:
+        parameters["logger"].info(f"Batch job is still running (or might have failed, just check it). Try again later to parse results.")
+        return
+    elif completed == 1:
+        parameters["logger"].info(f"Batch job is completed. Parsing results.")
+        reading = True
+    else:
+        if not not_sent:
+            log_error(parameters["logger"], "Status of batch jobs is weird. Check this.")
+        reading = False        
     indexes = []
     for idx, row in results_df.iterrows():
         if previous_check is not None:
             check_bool = row[previous_check]
             if not check_bool:
                 continue
-        data = dataset[idx]
-        image = data["image"]
-        black, white, noise = create_trivial_images(image.width, image.height)
-        for trivial_image, trivial_name in zip([black, white, noise, None], all_trivials):
-            image_texts[f"trivial_{trivial_name}_full_information"].append((trivial_image, data["full_information_question"]))
-            image_texts[f"trivial_{trivial_name}_image_reference"].append((trivial_image, data["image_reference_question"]))
+        if not reading:
+            data = dataset[idx]
+            image = data["image"]
+            black, white, noise = create_trivial_images(image.width, image.height)
+            for trivial_image, trivial_name in zip([black, white, noise, None], all_trivials):
+                image_texts[f"trivial_{trivial_name}_full_information"].append((trivial_image, data["full_information_question"]))
+                image_texts[f"trivial_{trivial_name}_image_reference"].append((trivial_image, data["image_reference_question"]))
         indexes.append(idx)
     results = {}
     for key in image_texts:
-        results[key] = vlm(image_texts[key], f"{vlm}_{dataset}_{key}", indexes)
-    first_key = list(results.keys())[0]
-    if results[first_key] is None:
+        image_text_input = image_texts[key] if not reading else None
+        results[key] = vlm(image_text_input, f"{vlm}_{dataset}_{key}", indexes)
+    if not reading:
         parameters["logger"].info(f"Using OpenAI, sent batch job. Try again when batch is completed to parse results")
         return
+    first_key = list(results.keys())[0]
+    if results[first_key] is None:
+        log_error(parameters["logger"], f"Error in OpenAI results. Found None for {first_key} results.")
     for idx in indexes:
         for key in results:
             idx_row = results[key].loc[results[key]["idx"] == idx]
