@@ -294,6 +294,7 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
 
         data = pd.DataFrame(data, columns=columns)
         results_dir = parameters["results_dir"] + f"/{dataset}/{vlm}/hidden_states/{run_variant}/"
+        os.makedirs(results_dir, exist_ok=True)
         for dataset in datasets:
             subdf = data[data["Dataset"] == dataset].reset_index(drop=True)
             subdf.to_csv(results_dir + f"/ood_results.csv", index=False)
