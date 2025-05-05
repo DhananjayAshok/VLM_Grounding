@@ -157,11 +157,14 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
         if X_test is not None:
             test_pred = model.predict_proba(X_test)
             test_acc, test_prec, test_recall, test_f1, test_auc = compute_metrics(y_test, test_pred)
+            ones = (test_pred.argmax(axis=1) == 1) # Thinks its correct
+            coverage = ones.mean()
+            risk = (y_test[ones] == 0).mean()
             if verbose:
                 parameters["logger"].info(f"Base Rate: ")
                 print_base_rate(y_test, verbose=verbose, parameters=parameters)
                 parameters["logger"].info(f"Total Test Accuracy: {test_acc}")
-                parameters["logger"].info(f"Test Precision: {test_prec}, Test Recall: {test_recall}, Test F1: {test_f1}, Test AUC: {test_auc}")
+                parameters["logger"].info(f"Coverage: {coverage}, Risk: {risk}")
         else:
             parameters["logger"].warning(f"Got no X_test in model fit. This should only happen if you are running OOD hidden state modeling.")
         #threshold = 0.95
@@ -199,8 +202,12 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
             _ = model.predict_proba(X_perplexity_train)
             test_pred_perp = model.predict_proba(X_perplexity_test)
             test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
+            ones_perp = (test_pred_perp.argmax(axis=1) == 1) # Thinks its correct
+            coverage_perp = ones_perp.mean()
+            risk_perp = (y_test[ones_perp] == 0).mean()
             if verbose:
                 parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
+                parameters["logger"].info(f"Perplexity based Coverage: {coverage_perp}, Risk: {risk_perp}")
         return test_pred, test_pred_perp, test_acc
 
 
