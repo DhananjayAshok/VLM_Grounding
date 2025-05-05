@@ -79,14 +79,18 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
     if results[first_key] is None:
         log_error(parameters["logger"], f"Results for {first_key} are None. This is a bug and shouldn't be happening.")
         return
+    fails = []
     for idx in indexes:
         for key in results:
             idx_row = results[key].loc[results[key]["idx"] == idx]
             if len(idx_row) != 1:
-                log_error(parameters["logger"], f"Error in OpenAI results. Found {len(idx_row)} idx rows for idx {idx} in {key} results.")
+                fails.append(idx)
+                continue
             results_df.loc[idx, f"{key}_response"] = idx_row["response"].values[0]
     results_df[f"{variant}_complete"] = True
     results_df.to_csv(results_df_path, index=False)
+    if len(fails) > 0:
+        parameters["logger"].info(f"Failed to parse results for indexes: {fails}. This is a bug and shouldn't be happening.")
     return
 
 

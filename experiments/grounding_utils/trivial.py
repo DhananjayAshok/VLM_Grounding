@@ -92,13 +92,17 @@ def handle_openai(dataset, vlm, results_df_path, parameters):
     first_key = list(results.keys())[0]
     if results[first_key] is None:
         log_error(parameters["logger"], f"Error in OpenAI results. Found None for {first_key} results.")
+    fails = []
     for idx in indexes:
         for key in results:
             idx_row = results[key].loc[results[key]["idx"] == idx]
             if len(idx_row) != 1:
-                log_error(parameters["logger"], f"Error in OpenAI results. Found {len(idx_row)} idx rows for idx {idx} in {key} results.")
+                fails.append((idx, key))
+                continue
             results_df.loc[idx, f"{key}_response"] = idx_row["response"].values[0]
     results_df[f"{variant}_complete"] = True
+    if len(fails) > 0:
+        parameters["logger"].info(f"Found {len(fails)} errors out of {len(results[first_key])} in OpenAI results. ")
     results_df.to_csv(results_df_path, index=False)
 
 def save(results_df, results_df_path, full_hidden_state_trackers, full_projection_trackers, image_reference_hidden_state_trackers, image_reference_projection_trackers):
