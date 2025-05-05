@@ -1,4 +1,4 @@
-datasets=("mnist" "cifar100" "food101" "landmarks ""okvqa")
+datasets=("mnist" "cifar100" "food101" "landmarks" "okvqa")
 
 for dataset in "${datasets[@]}"; do
     echo "XXX Fitting on $dataset XXX"
