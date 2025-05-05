@@ -205,9 +205,18 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
             ones_perp = (test_pred_perp.argmax(axis=1) == 1) # Thinks its correct
             coverage_perp = ones_perp.mean()
             risk_perp = (y_test[ones_perp] == 0).mean()
+            combined_test_pred = (test_pred + test_pred_perp) / 2
+            combined_test_acc, _, _, _, _ = compute_metrics(y_test, combined_test_pred)
+            ones_combined = (combined_test_pred.argmax(axis=1) == 1) # Thinks its correct
+            coverage_combined = ones_combined.mean()
+            risk_combined = (y_test[ones_combined] == 0).mean()
             if verbose:
                 parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
                 parameters["logger"].info(f"Perplexity based Coverage: {coverage_perp}, Risk: {risk_perp}")
+                parameters["logger"].info(f"Combined Test Accuracy: {combined_test_acc}")
+                parameters["logger"].info(f"Combined Coverage: {coverage_combined}, Risk: {risk_combined}")
+                parameters["logger"].info(f"Combined Test Accuracy: {combined_test_acc}")
+                parameters["logger"].info(f"Combined Coverage: {coverage_combined}, Risk: {risk_combined}")
         return test_pred, test_pred_perp, test_acc
 
 
