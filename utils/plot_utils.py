@@ -53,24 +53,29 @@ class Plotter:
                 print(f"Got {got}, but it must be a number")
                 continue
 
-    def test_sizes(self):
+    def test_sizes_looper(self):
+        """
+        Utility function to test a plot configuration with sizes. You want to create a while loop with the following pattern:
+        done = False
+        while not done:
+            plot_function() # creates a plt plot
+            done = plotter.test_sizes_looper()
+        # With this you can test out various font sizes on the same plot quickly. 
+        """
         if self.parameters["figure_force_save"]:
             self.parameters["logger"].warn("Parameters currently sets figure_force_save to True. This suggests you are running in an env without a display, but you cannot test sizes iteratively this way. This code may behave weirdly...")
         
-        done = False
-        while not done:
-            print(f"Plot with sizes: ")
-            print(f"{self.size_params}")
-            plt.show()
-            keepgoing = input("Do you want to keep trying different sizes? (only y will keep going):")
-            if keepgoing.lower().strip() == "y":
-                for key in self.size_params:
-                    self.size_params[key] = self.get_size_input_number(key)
-                self.set_size_parameters_from_dict(self.size_params)
-            else:
-                done = True
-                break
-        return
+        print(f"Plot with sizes: ")
+        print(f"{self.size_params}")
+        plt.show()
+        keepgoing = input("Do you want to keep trying different sizes? (only y will keep going):")
+        if keepgoing.lower().strip() == "y":
+            for key in self.size_params:
+                self.size_params[key] = self.get_size_input_number(key)
+            self.set_size_parameters_from_dict(self.size_params)
+            return False
+        else:
+            return True
 
     def show(self, save_path=None, data_df=None):
         if self.parameters["figure_force_save"] and save_path is None:

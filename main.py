@@ -7,7 +7,7 @@ from experiments.okvqa_inference import setup_okvqa, okvqa_inference, evaluate_o
 from data.automatic_qa_utils import generate_questions, validate_questions, deduplicate_questions, full_qa_pipeline
 from data.annotation import split_annotation_files, process_annotation_results
 from data import setup_data, validate_classes
-
+from quick_plot import do_plot
 
 loaded_parameters = load_parameters()
 
@@ -46,6 +46,7 @@ main.add_command(okvqa_inference, name="run_okvqa")
 main.add_command(evaluate_okvqa, name="evaluate_okvqa")
 main.add_command(split_annotation_files, name="split_annotation_files")
 main.add_command(process_annotation_results, name="process_annotation_results")
+main.add_command(do_plot, name="do_plot")
 
 
 if __name__ == "__main__":

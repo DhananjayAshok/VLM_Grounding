@@ -38,26 +38,46 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
     if results_df[f"{variant}_complete"].all():
         parameters["logger"].warning(f"{variant} script already completed for {dataset} and {vlm}. Returning file found at {results_df_path} ...")
         return 
+    names = [f"{vlm}_{dataset}_{key}}" for key in image_texts.keys()]
+    statuses = [vlm.get_batch_status(name) for name in names]
+    completed = all([status == 1 for status in statuses])
+    running = any([status == 0 for status in statuses])
+    not_sent = all([status == None for status in statuses])
+    if running:
+        parameters["logger"].info(f"Batch job is still running (or might have failed, just check it). Try again later to parse results.")
+        return
+    elif completed == 1:
+        parameters["logger"].info(f"Batch job is completed. Parsing results.")
+        reading = True
+    else:
+        if not not_sent:
+            log_error(parameters["logger"], "Status of batch jobs is weird. Check this.")
+        reading = False        
     indexes = []
     for idx, row in results_df.iterrows():
         if previous_check is not None:
             check_bool = row[previous_check]
             if not check_bool:
                 continue
-        data = dataset[idx]
-        if "trivial" in variant:
-            image = None
-        else:
-            image = data["image"]
-        question = data[f"{read_variant}_question"]
-        image_texts[variant].append((image, question))
+        if not reading:
+            data = dataset[idx]
+            if "trivial" in variant:
+                log_error(parameters["logger"], f"Trivial experiment script not implemented for OpenAI in common.py you should be calling on the one in trivial.py. Please run the image reference script first.")
+            else:
+                image = data["image"]
+            question = data[f"{read_variant}_question"]
+            image_texts[variant].append((image, question))
         indexes.append(idx)
     results = {}
     for key in image_texts:
-        results[key] = vlm(image_texts[key], f"{vlm}_{dataset}_{key}", indexes)
+        image_text_input = image_texts[key] if not reading else None
+        results[key] = vlm(image_text_input, f"{vlm}_{dataset}_{key}", indexes)
+    if not reading:
+        parameters["logger"].info(f"Using OpenAI, sent batch job. Try again when batch is completed to parse results")
+        return
     first_key = list(results.keys())[0]
     if results[first_key] is None:
-        parameters["logger"].info(f"Using OpenAI, sent batch job. Try again when batch is completed to parse results")
+        log_error(parameters["logger"], f"Results for {first_key} are None. This is a bug and shouldn't be happening.")
         return
     for idx in indexes:
         for key in results:

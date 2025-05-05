@@ -309,11 +309,14 @@ class OpenAIInference:
             return None
         with open(os.path.join(openai_tmp_file_dir, f"id_{batch_name}.txt"), "r") as f:
             batch_id = f.read()
-        batch = self.client.batches.retrieve(batch_id)
-        if batch.status == "completed":
-            return 1
-        else:
-            return 0
+        try:
+            batch = self.client.batches.retrieve(batch_id)
+            if batch.status == "completed":
+                return 1
+            else:
+                return 0
+        except:
+            return None
 
     def get_batch_results(self, batch_name):
         with open(os.path.join(openai_tmp_file_dir, f"id_{batch_name}.txt"), "r") as f:
