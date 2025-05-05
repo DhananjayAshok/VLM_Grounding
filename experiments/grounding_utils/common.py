@@ -90,7 +90,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
     results_df[f"{variant}_complete"] = True
     results_df.to_csv(results_df_path, index=False)
     if len(fails) > 0:
-        parameters["logger"].info(f"Failed to parse results for indexes: {fails}. This is a bug and shouldn't be happening.")
+        parameters["logger"].info(f"Failed to parse results for {len(fails)} indexes out of {len(results[first_key])}: This is a bug and shouldn't be happening.")
     return
 
 
