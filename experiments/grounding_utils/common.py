@@ -52,6 +52,7 @@ def handle_openai(dataset, vlm, results_df_path, parameters, variant="identifica
     else:
         if not not_sent:
             log_error(parameters["logger"], "Status of batch jobs is weird. Check this.")
+        parameters["logger"].info(f"Batch job is not sent yet. Sending batch job now.")
         reading = False        
     indexes = []
     for idx, row in results_df.iterrows():

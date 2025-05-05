@@ -152,6 +152,7 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
         train_pred = model.predict_proba(X_train)
         #val_pred = model.predict_proba(X_val)
         test_pred = None
+        test_pred_perp = None
         test_acc = None
         if X_test is not None:
             test_pred = model.predict_proba(X_test)
@@ -200,7 +201,38 @@ def do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexi
             test_acc_perp, _, _, _, _ = compute_metrics(y_test, test_pred_perp)
             if verbose:
                 parameters["logger"].info(f"Perplexity based Test Accuracy: {test_acc_perp}")
-        return train_pred, test_pred, test_acc
+        return test_pred, test_pred_perp, test_acc
+
+
+def compute_coverage(estimator_pred, threshold):
+    # estimator pred is shape (n_samples, 2)
+    one_confidence = estimator_pred[:, 1]
+    removed = one_confidence < threshold
+    return (removed).mean() * 100
+
+def compute_risk(estimator_pred, y_test, threshold):
+    # estimator pred is shape (n_samples, 2)
+    one_confidence = estimator_pred[:, 1]
+    removed = one_confidence < threshold
+    risk = (y_test[removed] == 1).mean() * 100
+    return risk
+
+def do_selective_prediction(y_test, test_pred, test_pred_perp, layer, parameters=None):
+    if parameters is None:
+        parameters = load_parameters()
+    thresholds = [0.01 + i * 0.01 for i in range(100)]
+    data = []
+    columns = ["Method", "Threshold", "Coverage", "Risk"]
+    for threshold in thresholds:
+        coverage = compute_coverage(test_pred, threshold)
+        risk = compute_risk(test_pred, y_test, threshold)
+        data.append(["Probe", threshold, coverage, risk])
+        coverage_perp = compute_coverage(test_pred_perp, threshold)
+        risk_perp = compute_risk(test_pred_perp, y_test, threshold)
+        data.append(["Perplexity", threshold, coverage_perp, risk_perp])
+    df = pd.DataFrame(data, columns=columns)
+    df.to_csv(f"{parameters['results_dir']}/okvqa_selective_prediction/{layer}.csv", index=False)
+    return df
 
 
 @click.command()
@@ -250,8 +282,10 @@ def fit_hidden_state_predictor(parameters, datasets, vlm, layer, run_variant, me
                 model = Linear()
                 X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs, dataset)
                 parameters["logger"].info(f"Testing on {dataset} after training on all other datasets. Layer {layer}")
-                _, _, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
+                test_pred, test_pred_perp, test_acc = do_model_fit(model, X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, verbose=True, prediction_dir=None, parameters=parameters)
                 data.append([layer, dataset, test_acc])
+                if dataset == "okvqa":
+                    do_selective_prediction(y_test, test_pred, test_pred_perp, layer, parameters=parameters)
             X_train, X_perplexity_train, y_train, X_test, X_perplexity_test, y_test, df_train, df_test = split_ood_dataset(xydfs)
             results_dir = parameters["results_dir"] + f"/all/{vlm}/hidden_states/{run_variant}/layer_{layer}/"
             model = Linear()
