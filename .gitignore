@@ -175,3 +175,4 @@ cython_debug/
 storage/
 openai_tmp_files/
 *.out
+results/
