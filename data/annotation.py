@@ -58,9 +58,10 @@ def process_annotation_results(parameters):
         items = base_df.index
         labels = {}
         for i in range(n_annotators):
-            avg = base_df[f"{metric}_{i}"].mean()
+            metric_str = f"{metric}_{i}"
+            avg = base_df[metric_str].mean()
             parameters["logger"].info(f"Average {metric} for annotator {i}: {avg}")
-            labels[f"coder{i}"] = (base_df[f"{metric}_{i}"].tolist())
+            labels[f"coder{i}"] = (base_df[metric_str].tolist())
             true_avg += avg
         true_avg /= n_annotators       
         task_data = []
@@ -71,5 +72,14 @@ def process_annotation_results(parameters):
         kappa = task.kappa()
         parameters["logger"].info(f"Average {metric} for all annotators: {true_avg}")
         parameters["logger"].info(f"Kappa for {metric}: {kappa}")
+        three_way_agreement = (base_df[metric + "_0"] == base_df[metric + "_1"]) & (base_df[metric + "_0"] == base_df[metric + "_2"])
+        parameters["logger"].info(f"Three way agreement for {metric}: {three_way_agreement.mean()}")
+        #enumerate over pairs of annotators:
+        for i in range(n_annotators):
+            for j in range(i + 1, n_annotators):
+                coder_i = f"coder{i}"
+                coder_j = f"coder{j}"
+                agreement = (base_df[metric + f"_{i}"] == base_df[metric + f"_{j}"])
+                parameters["logger"].info(f"Agreement between {coder_i} and {coder_j}: {agreement.mean()}")
     
 
