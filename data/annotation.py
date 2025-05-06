@@ -2,7 +2,7 @@ import click
 from utils.log_handling import log_error
 import pandas as pd
 import numpy as np
-import nltk.metrics.agreement as agreement
+from nltk.metrics import AnnotationTask
 import os
 from tqdm import tqdm
 
@@ -67,7 +67,7 @@ def process_annotation_results(parameters):
         for coder in coders:
             for item_i, item in enumerate(items):
                 task_data.append((coder, item, labels[coder][item_i]))
-        task = agreement.AnnotationTask(task_data)
+        task = AnnotationTask(task_data)
         kappa = task.kappa()
         parameters["logger"].info(f"Average {metric} for all annotators: {true_avg}")
         parameters["logger"].info(f"Kappa for {metric}: {kappa}")
