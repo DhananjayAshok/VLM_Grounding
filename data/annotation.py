@@ -74,9 +74,12 @@ def process_annotation_results(parameters):
                 for item_i, item in enumerate(items):
                     task_data.append((coder, item, labels[coder][item_i]))
             task = AnnotationTask(task_data)
-            kappa = task.kappa()
+            try:
+                kappa = task.kappa()
+                parameters["logger"].info(f"\tKappa for {metric}: {kappa}")
+            except:
+                parameters["logger"].info(f"\tKappa for {metric} could not be computed")
             parameters["logger"].info(f"\tAverage {metric} for all annotators: {true_avg}")
-            parameters["logger"].info(f"\tKappa for {metric}: {kappa}")
             three_way_agreement = (dataset_df[metric + "_0"] == dataset_df[metric + "_1"]) & (dataset_df[metric + "_0"] == dataset_df[metric + "_2"])
             parameters["logger"].info(f"\tThree way agreement for {metric}: {three_way_agreement.mean()}")
             #enumerate over pairs of annotators:
