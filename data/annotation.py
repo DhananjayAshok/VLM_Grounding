@@ -49,6 +49,12 @@ def process_annotation_results(parameters):
     base_df["answer_correct_1"] = second_df["answer_correct"]
     base_df["question_relevant_2"] = third_df["question_relevant"]
     base_df["answer_correct_2"] = third_df["answer_correct"]
+    metrics = ["question_relevant", "answer_correct"]
+    n_annotators = 3
+    for metric in metrics:
+        for i in range(n_annotators):
+            avg = base_df[f"{metric}_{i}"].mean()
+    
 
     
 
