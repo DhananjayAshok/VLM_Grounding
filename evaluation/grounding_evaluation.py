@@ -110,6 +110,7 @@ def log_final_evaluation(df, parameters, okvqa=False):
         slice_cols = []
     metrics = metrics_to_use + ["mcq_correct"]
     for log_metric in metrics:
+        logger.info(f"Metric: {log_metric}")
         for candidate_col in candidate_cols:
             column = f"{log_metric}_{candidate_col}"
             if column in df.columns:
@@ -123,7 +124,7 @@ def log_final_evaluation(df, parameters, okvqa=False):
                     nan_col = candidate_col
                 nonnan = df[df[nan_col].notna()]
                 if candidate_col == "full_information_response":
-                    logger.info(f"{column}: {show_float(nonnan[column].mean())}")
+                    logger.info(f"\t{candidate_col}: {show_float(nonnan[column].mean())}")
                 if candidate_col not in ["full_information_response", "trivial_mode_image_reference_response"]:
                     for slice_col in slice_cols:
                         slice_metric_col = f"{log_metric}_{slice_col}"
@@ -133,4 +134,4 @@ def log_final_evaluation(df, parameters, okvqa=False):
                             slice_df = df[df[slice_metric_col] == boolval]
                             nonnan = slice_df[slice_df["image_reference_response"].notna()]
                             #logger.info(f"\t{column} when {slice_col} is {boolval}: {nonnan[column].mean()}")
-                            logger.info(f"\t{column} Controlled: {show_float(nonnan[column].mean())}")
+                            logger.info(f"\t{candidate_col} Controlled: {show_float(nonnan[column].mean())}")
