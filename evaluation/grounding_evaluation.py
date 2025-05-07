@@ -41,7 +41,7 @@ def get_column_mode(df, columns):
 
 
 
-metrics_to_use = ["two_way_inclusion"]#, "inclusion", "exact_match", "bleu"]
+metrics_to_use = ["two_way_inclusion", "exact_match", "bleu"] # + ["inclusion"]
 
 
 def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
