@@ -34,7 +34,7 @@ def column_mode(row):
 
 def get_column_mode(df, columns):
     modes = []
-    for i, row in tqdm(df.iterrows(), total=len(df), desc="Computing column mode"):
+    for i, row in df.iterrows():#, total=len(df), desc="Computing column mode"):
         mode = column_mode(row[columns])
         modes.append(mode)
     return modes
@@ -57,14 +57,14 @@ def do_final_evaluation(df, parameters, verbose=False, okvqa=False, mcq=False):
     metrics = metrics_to_use
     if mcq:
         metrics.append("mcq_correct")
-    for metric in tqdm(metrics, desc="Computing metrics"):
+    for metric in metrics:#, desc="Computing metrics"):
         for candidate_column in candidate_columns:
             output_column = f"{metric}_{candidate_column}"
             give_ref = reference_column if metric != "mcq_correct" else "mcq_answer"
             df = df_compute_metric_str(metric, df, candidate_column, give_ref, output_column=output_column, save=False, parameters=parameters, verbose=verbose)
     if okvqa:
         return df
-    for metric in tqdm(metrics, desc="Computing trivial aggregation metrics"):
+    for metric in metrics:#, desc="Computing trivial aggregation metrics"):
         for variant in ["full_information", "image_reference"]:
             output_columns = []
             candidate_columns = []
