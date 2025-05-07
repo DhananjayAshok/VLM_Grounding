@@ -123,7 +123,7 @@ def log_final_evaluation(df, parameters, okvqa=False):
                 else:
                     nan_col = candidate_col
                 nonnan = df[df[nan_col].notna()]
-                if candidate_col == "full_information_response":
+                if candidate_col in ["full_information_response", "trivial_mode_image_reference_response"]:
                     logger.info(f"\t{candidate_col}: {show_float(nonnan[column].mean())}")
                 if candidate_col not in ["full_information_response", "trivial_mode_image_reference_response"]:
                     for slice_col in slice_cols:
