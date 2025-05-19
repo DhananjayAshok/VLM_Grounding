@@ -1,12 +1,5 @@
-# Project Starter
-This repository is a useful starting point for a project in Python. It has the following set up:
+# Guide
 
-1. Parameter dictionaries with optional specification in command line  using click
-2. A single main file that can be used to call all subfunctions as click commands
-3. Meta dictionary hashing to save parameter values to a unique string
+To set up datasets run bash scripts/setup_dataset.sh $dataset_name 
 
-To get started, use this template to create a new repo
-
-
-#TODO:
-Do selective prediction on OKVQA. What we are identifying is whether linking has failed. But training on the synthetic set then the probe can notify you to failures. ZeroShot on an outside task. 
+Then run experiments with bash scripts/experiment_all_models.sh $dataset_name
